@@ -21,16 +21,16 @@ export default function ShopByCategory() {
       link: "#shop?category=home-decor",
     },
     {
-      title: "Kits & Bundles",
+      title: "Accessories & Gifts",
       image: "/assets/02_website_assets/category_banners/kits_and_bundles.png",
-      link: "#shop?category=kits-bundles",
+      link: "#shop?category=accessories-gifts",
     },
   ];
 
   return (
     <section id="categories" className="section-padding category-section">
       <div className="container">
-        <h2 className="section-title text-serif">Shop By Category</h2>
+        <h2 className="section-title text-serif">Our Specialties</h2>
         <div className="section-subtitle tagline">
           <span className="flourish-heart">♥</span>
           Made one loop at a time

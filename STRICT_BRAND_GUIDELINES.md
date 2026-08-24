@@ -82,7 +82,7 @@ Homepage order:
 2. Navigation
 3. Hero
 4. Brand-value strip
-5. Shop by category
+5. Our specialties
 6. Featured/new products
 7. Meet Anjali / maker story
 8. Why handmade

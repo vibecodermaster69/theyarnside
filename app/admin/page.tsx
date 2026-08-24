@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { LogOut, Plus, Save, Trash2 } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
 
-const categories = ["amigurumi", "wearables", "home-decor", "kits-bundles"];
+const categories = ["amigurumi", "wearables", "home-decor", "accessories-gifts"];
 
 type Product = {
   id: number;

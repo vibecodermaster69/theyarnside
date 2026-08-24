@@ -88,7 +88,7 @@ export default function Footer() {
             <h3 className="footer-title text-serif">Shop</h3>
             <ul className="footer-links">
               <li><Link href="#shop" className="footer-link">All Products</Link></li>
-              <li><Link href="#shop?category=kits-bundles" className="footer-link">Kits & Bundles</Link></li>
+              <li><Link href="#shop?category=accessories-gifts" className="footer-link">Accessories & Gifts</Link></li>
               <li><Link href="#shop?category=amigurumi" className="footer-link">Amigurumi</Link></li>
               <li><Link href="#shop?category=wearables" className="footer-link">Wearables</Link></li>
               <li><Link href="#shop?category=home-decor" className="footer-link">Home Decor</Link></li>

@@ -28,7 +28,7 @@ export default function Home() {
         {/* 4. Brand Value Strip */}
         <BrandValueStrip />
         
-        {/* 5. Shop By Category */}
+        {/* 5. Our Specialties */}
         <ShopByCategory />
         
         {/* 6. Featured / New Products */}
