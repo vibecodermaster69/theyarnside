@@ -7,6 +7,7 @@ export type CartProduct = {
   name: string;
   priceInr: number;
   image: string;
+  stockQuantity: number;
 };
 
 export type CartItem = CartProduct & { quantity: number };
@@ -55,6 +56,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       setItems((current) => {
         const existing = current.find((item) => item.id === product.id);
         if (existing) {
+          if (existing.quantity >= product.stockQuantity) return current;
           return current.map((item) => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
         }
         return [...current, { ...product, quantity: 1 }];
@@ -64,7 +66,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     updateQuantity: (id, quantity) => {
       setItems((current) => quantity <= 0
         ? current.filter((item) => item.id !== id)
-        : current.map((item) => item.id === id ? { ...item, quantity } : item));
+        : current.map((item) => item.id === id ? { ...item, quantity: Math.min(quantity, item.stockQuantity) } : item));
     },
     removeItem: (id) => setItems((current) => current.filter((item) => item.id !== id)),
     clearCart: () => setItems([]),

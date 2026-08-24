@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Heart, ShoppingBag } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
 import RequestOrderModal from "@/components/RequestOrderModal";
+import { useCart } from "@/components/CartProvider";
 
 interface Product {
   id: number;
@@ -14,6 +15,7 @@ interface Product {
   priceInr?: number;
   image: string;
   isNew: boolean;
+  stockQuantity: number;
 }
 
 export default function NewArrivals() {
@@ -25,6 +27,7 @@ export default function NewArrivals() {
       price: "₹5,200",
       image: "/assets/02_website_assets/product_images/daisy_market_tote.png",
       isNew: true,
+      stockQuantity: 0,
     },
     {
       id: 2,
@@ -33,6 +36,7 @@ export default function NewArrivals() {
       price: "₹2,850",
       image: "/assets/02_website_assets/product_images/blush_bunny.png",
       isNew: true,
+      stockQuantity: 0,
     },
     {
       id: 3,
@@ -41,6 +45,7 @@ export default function NewArrivals() {
       price: "₹8,200",
       image: "/assets/02_website_assets/product_images/vintage_square_blanket.png",
       isNew: true,
+      stockQuantity: 0,
     },
     {
       id: 4,
@@ -49,12 +54,54 @@ export default function NewArrivals() {
       price: "₹3,200",
       image: "/assets/02_website_assets/product_images/the_cozy_beanie.png",
       isNew: true,
+      stockQuantity: 0,
+    },
+    {
+      id: 5,
+      name: "Paranda",
+      category: "Hair & Fashion Accessories",
+      price: "₹250",
+      priceInr: 250,
+      image: "/assets/02_website_assets/product_images/paranda.png",
+      isNew: true,
+      stockQuantity: 5,
+    },
+    {
+      id: 6,
+      name: "Evil Eye",
+      category: "Keychains & Charms",
+      price: "₹250",
+      priceInr: 250,
+      image: "/assets/02_website_assets/product_images/evil_eye.png",
+      isNew: true,
+      stockQuantity: 5,
+    },
+    {
+      id: 7,
+      name: "3 Musketeers Mushroom",
+      category: "Keychains & Charms",
+      price: "₹250",
+      priceInr: 250,
+      image: "/assets/02_website_assets/product_images/three_musketeers_mushroom.png",
+      isNew: true,
+      stockQuantity: 5,
+    },
+    {
+      id: 8,
+      name: "Red Cherry",
+      category: "Keychains & Charms",
+      price: "₹250",
+      priceInr: 250,
+      image: "/assets/02_website_assets/product_images/red_cherry.png",
+      isNew: true,
+      stockQuantity: 5,
     },
   ];
 
   const [products, setProducts] = useState<Product[]>(fallbackProducts);
   const [wishlist, setWishlist] = useState<number[]>([]);
   const [requestProduct, setRequestProduct] = useState<Product | null>(null);
+  const { addItem } = useCart();
 
   useEffect(() => {
     let client;
@@ -66,7 +113,7 @@ export default function NewArrivals() {
 
     client
       .from("products")
-      .select("id, name, category, price_inr, image_url, is_new")
+      .select("id, name, category, price_inr, image_url, is_new, stock_quantity")
       .eq("is_active", true)
       .order("created_at", { ascending: false })
       .then(({ data, error }) => {
@@ -78,6 +125,7 @@ export default function NewArrivals() {
           price: `₹${product.price_inr.toLocaleString("en-IN")}`,
           image: product.image_url || "/assets/02_website_assets/product_images/daisy_market_tote.png",
           isNew: product.is_new,
+          stockQuantity: product.stock_quantity,
         })));
       });
   }, []);
@@ -128,7 +176,8 @@ export default function NewArrivals() {
                   alt={product.name}
                   width={320}
                   height={400}
-                  className="product-image zoom-image"
+                  unoptimized={product.image.startsWith("http")}
+                  className={`product-image zoom-image ${product.name === "Red Cherry" ? "red-cherry-image" : ""}`}
                 />
               </div>
 
@@ -140,11 +189,14 @@ export default function NewArrivals() {
                 <div className="product-footer">
                   <span className="product-price text-serif">{product.price}</span>
                   <div className="stock-actions">
-                    <span className="out-of-stock">Out of stock</span>
-                    <button className="request-order-btn touch-target" aria-label={`Request an order for ${product.name}`} onClick={() => setRequestProduct(product)}>
+                    {product.stockQuantity === 0 ? <span className="out-of-stock">Out of stock</span> : product.stockQuantity <= 5 ? <span className="low-stock">Only {product.stockQuantity} remaining</span> : <span className="in-stock">In stock</span>}
+                    {product.stockQuantity > 0 ? <button className="add-to-cart-btn touch-target" aria-label={`Add ${product.name} to Cart`} onClick={() => addItem({ id: product.id, name: product.name, priceInr: product.priceInr ?? Number(product.price.replace(/[^0-9]/g, "")), image: product.image, stockQuantity: product.stockQuantity })}>
+                      <ShoppingBag size={16} />
+                      <span>Add</span>
+                    </button> : <button className="request-order-btn touch-target" aria-label={`Request an order for ${product.name}`} onClick={() => setRequestProduct(product)}>
                       <ShoppingBag size={16} />
                       <span>Request order</span>
-                    </button>
+                    </button>}
                   </div>
                 </div>
               </div>
@@ -196,6 +248,11 @@ export default function NewArrivals() {
           object-fit: cover;
           width: 100%;
           height: 100%;
+        }
+
+        .red-cherry-image {
+          object-fit: cover;
+          object-position: center center;
         }
 
         .product-tag {
@@ -282,7 +339,20 @@ export default function NewArrivals() {
           text-transform: uppercase;
         }
 
-        .request-order-btn {
+        .low-stock, .in-stock {
+          color: var(--coral);
+          font-family: var(--font-lato), sans-serif;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+        }
+
+        .in-stock {
+          color: var(--sage);
+        }
+
+        .add-to-cart-btn, .request-order-btn {
           display: inline-flex;
           align-items: center;
           gap: 6px;
@@ -297,7 +367,11 @@ export default function NewArrivals() {
           transition: var(--transition-fast);
         }
 
-        .request-order-btn:hover {
+        .add-to-cart-btn {
+          background-color: var(--sage);
+        }
+
+        .add-to-cart-btn:hover, .request-order-btn:hover {
           background-color: var(--sage-hover);
           transform: scale(1.03);
         }

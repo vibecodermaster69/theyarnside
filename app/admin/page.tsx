@@ -1,10 +1,10 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
-import { LogOut, Plus, Save, Trash2 } from "lucide-react";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import { Copy, LogOut, Plus, Save, Trash2 } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
 
-const categories = ["amigurumi", "wearables", "home-decor", "accessories-gifts"];
+const categories = ["amigurumi", "wearables", "home-decor", "accessories-gifts", "hair-fashion-accessories", "keychains-charms"];
 
 type Product = {
   id: number;
@@ -49,6 +49,7 @@ type OrderRequest = {
 
 const orderStatuses = ["new", "contacted", "payment_pending", "paid", "making", "shipped", "completed", "cancelled"];
 const requestStatuses = ["new", "contacted", "accepted", "declined", "completed"];
+const imagePrompt = "Resize and crop this handmade crochet product photo for an ecommerce product card. Keep the product fully visible and centered, preserve its real colors and crochet texture, use a clean warm cream background, and produce a high-quality 4:5 portrait image at exactly 1200 x 1500 pixels. Do not add text, logos, borders, props, or watermarks. Avoid stretching the product; use natural padding where needed.";
 
 const emptyProduct: ProductDraft = {
   name: "",
@@ -75,6 +76,7 @@ export default function AdminPage() {
   const [instagramLinks, setInstagramLinks] = useState<string[]>([]);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     try {
@@ -175,6 +177,39 @@ export default function AdminPage() {
     setBusy(false);
   }
 
+  async function uploadProductImage(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file || !supabase) return;
+    if (!file.type.startsWith("image/")) {
+      setMessage("Please choose an image file.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage("Please choose an image smaller than 5 MB.");
+      return;
+    }
+
+    setUploadingImage(true);
+    setMessage("");
+    const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const filePath = `${crypto.randomUUID()}.${extension}`;
+    const { error } = await supabase.storage.from("product-images").upload(filePath, file, { contentType: file.type, upsert: false });
+    if (error) {
+      setMessage(`Image upload failed: ${error.message}`);
+    } else {
+      const { data } = supabase.storage.from("product-images").getPublicUrl(filePath);
+      setDraft((current) => ({ ...current, image_url: data.publicUrl }));
+      setMessage("Image uploaded. Save the product to keep it in the catalogue.");
+    }
+    setUploadingImage(false);
+    event.target.value = "";
+  }
+
+  async function copyImagePrompt() {
+    await navigator.clipboard.writeText(imagePrompt);
+    setMessage("Image resizing prompt copied.");
+  }
+
   function downloadOrderRequests() {
     const headers = ["Request ID", "Created", "Product", "Quantity", "Customer", "Phone", "Shipping Address", "Budget INR", "Timeframe", "Notes", "Status"];
     const escapeCell = (value: string | number | null) => `"${String(value ?? "").replace(/"/g, '""')}"`;
@@ -223,11 +258,17 @@ export default function AdminPage() {
             <label>Category<select value={draft.category} onChange={(event) => setDraft({ ...draft, category: event.target.value })}>{categories.map((category) => <option key={category} value={category}>{category}</option>)}</select></label>
             <label>Price (INR)<input type="number" min="0" required value={draft.price_inr} onChange={(event) => setDraft({ ...draft, price_inr: Number(event.target.value) })} /></label>
             <label>Stock quantity<input type="number" min="0" required value={draft.stock_quantity} onChange={(event) => setDraft({ ...draft, stock_quantity: Number(event.target.value) })} /></label>
-            <label>Image URL<input value={draft.image_url ?? ""} onChange={(event) => setDraft({ ...draft, image_url: event.target.value })} placeholder="/assets/..." /></label>
+            <div className="image-upload-field wide">
+              <label>Upload product image<input type="file" accept="image/png,image/jpeg,image/webp" onChange={uploadProductImage} disabled={uploadingImage} /></label>
+              <p className="field-help">Recommended: 4:5 portrait ratio, exactly 1200 × 1500 px, JPG/PNG/WebP, under 5 MB.</p>
+              {draft.image_url && <img className="image-preview" src={draft.image_url} alt="Product preview" />}
+              <label>Image URL fallback<input value={draft.image_url ?? ""} onChange={(event) => setDraft({ ...draft, image_url: event.target.value })} placeholder="/assets/... or https://..." /></label>
+              <div className="prompt-box"><div><strong>AI resizing prompt</strong><p>{imagePrompt}</p></div><button type="button" className="secondary-button" onClick={copyImagePrompt}><Copy size={15} /> Copy prompt</button></div>
+            </div>
             <label className="wide">Description<textarea rows={3} value={draft.description ?? ""} onChange={(event) => setDraft({ ...draft, description: event.target.value })} /></label>
             <label className="check"><input type="checkbox" checked={draft.is_new} onChange={(event) => setDraft({ ...draft, is_new: event.target.checked })} /> Show as new</label>
             <label className="check"><input type="checkbox" checked={draft.is_active} onChange={(event) => setDraft({ ...draft, is_active: event.target.checked })} /> Visible on website</label>
-            <button type="submit" disabled={busy}><Save size={16} /> {editingId ? "Update product" : "Add product"}</button>
+            <button type="submit" disabled={busy || uploadingImage}><Save size={16} /> {editingId ? "Update product" : "Add product"}</button>
           </form>
           <div className="product-list">{products.map((product) => <article className="product-row" key={product.id}><div><strong>{product.name}</strong><span>{product.category} · ₹{product.price_inr.toLocaleString("en-IN")} · {product.stock_quantity} in stock</span></div><div className="row-actions"><button aria-label={`Edit ${product.name}`} onClick={() => { setEditingId(product.id); setDraft({ ...product, description: product.description ?? "", image_url: product.image_url ?? "" }); }}><Save size={16} /></button><button aria-label={`Delete ${product.name}`} onClick={() => deleteProduct(product.id)}><Trash2 size={16} /></button></div></article>)}</div>
         </section>
@@ -306,6 +347,15 @@ function AdminStyles() {
     .order-card-header select { width: auto; min-width: 150px; }
     .order-card p { margin: 6px 0; font-size: 14px; }
     .order-notes { color: rgba(75,58,50,.75); font-style: italic; }
+    .image-upload-field { display: grid; gap: 10px; }
+    .image-upload-field > label { gap: 8px; }
+    .image-upload-field input[type=file] { padding: 9px; }
+    .field-help { margin: 0 !important; color: rgba(75,58,50,.7); font-size: 12px !important; font-weight: 400; }
+    .image-preview { width: 140px; height: 175px; object-fit: cover; border: 1px solid rgba(75,58,50,.16); border-radius: 6px; background: var(--cream); }
+    .prompt-box { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 14px; background: var(--sage-light); border-left: 3px solid var(--sage); }
+    .prompt-box strong { font-size: 13px; }
+    .prompt-box p { margin: 5px 0 0; font-size: 12px; font-weight: 400; line-height: 1.5; }
+    .prompt-box .secondary-button { flex: 0 0 auto; padding: 9px 11px; }
     @media (max-width: 640px) { .admin-page { padding: 24px 16px; } .admin-section, .admin-login { padding: 24px; } .product-form { grid-template-columns: 1fr; } .product-form .wide, .product-form button { grid-column: auto; } .admin-header, .section-heading, .order-card-header { align-items: flex-start; flex-direction: column; } .product-row { align-items: flex-start; } .order-card-header select { width: 100%; } }
   `}</style>;
 }
