@@ -31,6 +31,14 @@ type Order = {
   status: string;
   total_inr: number;
   created_at: string;
+  order_items?: OrderItem[];
+};
+
+type OrderItem = {
+  id: number;
+  product_name: string;
+  quantity: number;
+  unit_price_inr: number;
 };
 
 type OrderRequest = {
@@ -111,7 +119,7 @@ export default function AdminPage() {
     const [{ data: productRows, error: productError }, { data: settingRow }, { data: orderRows, error: orderError }, { data: requestRows, error: requestError }] = await Promise.all([
       supabase.from("products").select("*").order("created_at", { ascending: false }),
       supabase.from("site_settings").select("value").eq("key", "instagram_links").maybeSingle(),
-      supabase.from("orders").select("*").order("created_at", { ascending: false }),
+      supabase.from("orders").select("*, order_items(*)").order("created_at", { ascending: false }),
       supabase.from("order_requests").select("*").order("created_at", { ascending: false }),
     ]);
 
@@ -289,6 +297,7 @@ export default function AdminPage() {
           {!orders.length ? <p>No order requests yet.</p> : <div className="order-list">{orders.map((order) => <article className="order-card" key={order.id}>
             <div className="order-card-header"><div><strong>Order #{order.id}</strong><span>{new Date(order.created_at).toLocaleString("en-IN")}</span></div><select value={order.status} onChange={async (event) => { if (!supabase) return; const nextStatus = event.target.value; const { error } = await supabase.from("orders").update({ status: nextStatus }).eq("id", order.id); setMessage(error ? error.message : `Order #${order.id} updated.`); if (!error) setOrders(orders.map((item) => item.id === order.id ? { ...item, status: nextStatus } : item)); }}>{orderStatuses.map((status) => <option key={status} value={status}>{status.replace("_", " ")}</option>)}</select></div>
             <p><strong>{order.customer_name}</strong> · {order.customer_phone}{order.customer_email ? ` · ${order.customer_email}` : ""}</p>
+            <div className="order-products"><strong>Products</strong>{order.order_items?.length ? order.order_items.map((item) => <div className="order-product" key={item.id}><span>{item.product_name} x {item.quantity}</span><span>₹{(item.unit_price_inr * item.quantity).toLocaleString("en-IN")}</span></div>) : <p>Product details unavailable for this order.</p>}</div>
             <p>{order.delivery_address}</p>
             {order.notes && <p className="order-notes">Note: {order.notes}</p>}
             <strong>{`₹${order.total_inr.toLocaleString("en-IN")}`}</strong>
@@ -347,6 +356,8 @@ function AdminStyles() {
     .order-card-header select { width: auto; min-width: 150px; }
     .order-card p { margin: 6px 0; font-size: 14px; }
     .order-notes { color: rgba(75,58,50,.75); font-style: italic; }
+    .order-products { margin: 12px 0; padding: 10px 12px; background: rgba(255,255,255,.65); border: 1px solid rgba(75,58,50,.1); }
+    .order-product { display: flex; justify-content: space-between; gap: 16px; margin-top: 6px; font-size: 14px; }
     .image-upload-field { display: grid; gap: 10px; }
     .image-upload-field > label { gap: 8px; }
     .image-upload-field input[type=file] { padding: 9px; }
