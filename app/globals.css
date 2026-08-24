@@ -1,0 +1,315 @@
+/* THE YARN SIDE — GLOBAL CSS STYLESHEET */
+
+:root {
+  /* Brand Colors */
+  --cocoa: #4B3A32;
+  --coral: #E07A69;
+  --coral-hover: #D46957;
+  --blush: #F2C6B9;
+  --sage: #8FA293;
+  --sage-hover: #7E9182;
+  --sage-light: #F0F3F1;
+  --cream: #F7F2EA;
+  --white: #FFFFFF;
+  
+  /* Layout & Spacing */
+  --container-max-width: 1200px;
+  --border-radius-sm: 4px;
+  --border-radius-md: 12px;
+  --border-radius-lg: 24px;
+  --border-radius-round: 50%;
+  
+  /* Typography Sizes (Scale) */
+  --fs-xs: 0.75rem;     /* 12px */
+  --fs-sm: 0.875rem;    /* 14px */
+  --fs-base: 1rem;      /* 16px */
+  --fs-md: 1.125rem;    /* 18px */
+  --fs-lg: 1.25rem;     /* 20px */
+  --fs-xl: 1.5rem;      /* 24px */
+  --fs-2xl: 2rem;       /* 32px */
+  --fs-3xl: 3rem;       /* 48px */
+  --fs-4xl: 4rem;       /* 64px */
+  
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --shadow-sm: 0 2px 8px rgba(75, 58, 50, 0.05);
+  --shadow-md: 0 8px 24px rgba(75, 58, 50, 0.08);
+}
+
+/* Reset & Base Styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--cream);
+  color: var(--cocoa);
+  font-family: var(--font-lato), var(--font-lora), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: var(--fs-base);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-playfair), Georgia, "Times New Roman", serif;
+  color: var(--cocoa);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: var(--transition-fast);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+button, input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* Common Layout Components */
+.container {
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: 0 24px;
+  width: 100%;
+}
+
+.section-padding {
+  padding: 80px 0;
+}
+
+@media (max-width: 768px) {
+  .section-padding {
+    padding: 48px 0;
+  }
+}
+
+/* Central Typography Utilites */
+.text-serif {
+  font-family: var(--font-playfair), Georgia, serif;
+}
+
+.text-sans {
+  font-family: var(--font-lato), sans-serif;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.tagline {
+  font-family: var(--font-lora), Georgia, serif;
+  font-style: italic;
+  color: var(--cocoa);
+  opacity: 0.9;
+}
+
+/* Buttons & CTAs */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 28px;
+  border-radius: var(--border-radius-lg);
+  font-family: var(--font-lato), sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: var(--fs-xs);
+  transition: var(--transition-normal);
+  min-height: 46px; /* Touch target size rule compliance */
+  cursor: pointer;
+}
+
+.btn-primary {
+  background-color: var(--coral);
+  color: var(--white);
+}
+
+.btn-primary:hover {
+  background-color: var(--coral-hover);
+  transform: translateY(-2px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  border: 1.5px solid var(--cocoa);
+  background-color: transparent;
+  color: var(--cocoa);
+}
+
+.btn-secondary:hover {
+  background-color: var(--cocoa);
+  color: var(--cream);
+  transform: translateY(-2px);
+}
+
+.btn-secondary:active {
+  transform: translateY(0);
+}
+
+.btn-sage {
+  background-color: var(--sage);
+  color: var(--white);
+}
+
+.btn-sage:hover {
+  background-color: var(--sage-hover);
+  transform: translateY(-2px);
+}
+
+.btn-sage:active {
+  transform: translateY(0);
+}
+
+.text-link {
+  font-family: var(--font-lato), sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: var(--fs-xs);
+  letter-spacing: 0.08em;
+  color: var(--cocoa);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1.5px solid transparent;
+  padding-bottom: 2px;
+}
+
+.text-link:hover {
+  color: var(--coral);
+  border-bottom-color: var(--coral);
+}
+
+/* Form Controls */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  font-family: var(--font-lato), sans-serif;
+  font-weight: 700;
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+  color: var(--cocoa);
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px 16px;
+  background-color: var(--white);
+  border: 1px solid rgba(75, 58, 50, 0.15);
+  border-radius: var(--border-radius-md);
+  font-family: var(--font-lora), Georgia, serif;
+  font-size: var(--fs-sm);
+  color: var(--cocoa);
+  transition: var(--transition-fast);
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: var(--coral);
+  box-shadow: 0 0 0 3px rgba(224, 122, 105, 0.1);
+}
+
+/* Cards & Hover Lift */
+.card-hover-lift {
+  transition: var(--transition-normal);
+}
+
+.card-hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Badges / Tags */
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  font-family: var(--font-lato), sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 4px;
+}
+
+.badge-new {
+  background-color: var(--sage);
+  color: var(--white);
+}
+
+/* Utilities */
+.flourish-heart {
+  display: inline-block;
+  color: var(--coral);
+  font-size: var(--fs-md);
+  margin: 0 10px;
+}
+
+.section-title {
+  font-size: var(--fs-2xl);
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.section-subtitle {
+  text-align: center;
+  margin-bottom: 48px;
+  color: var(--cocoa);
+  opacity: 0.8;
+  font-size: var(--fs-md);
+}
+
+/* Image Zoom Effect */
+.zoom-container {
+  overflow: hidden;
+}
+
+.zoom-image {
+  transition: transform 0.4s ease;
+}
+
+.zoom-container:hover .zoom-image {
+  transform: scale(1.05);
+}
+
+/* Touch targets custom rule (44px min for links in menus, etc.) */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
