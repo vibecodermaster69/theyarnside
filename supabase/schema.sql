@@ -56,3 +56,39 @@ create index products_category_idx on public.products(category);
 create index products_active_idx on public.products(is_active);
 create index orders_status_idx on public.orders(status);
 create index order_items_order_id_idx on public.order_items(order_id);
+
+create table public.admin_users (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+create table public.site_settings (
+  key text primary key,
+  value jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.admin_users enable row level security;
+alter table public.site_settings enable row level security;
+
+create policy "Admins can view their own admin record"
+on public.admin_users for select
+using (user_id = auth.uid());
+
+create policy "Public can view Instagram settings"
+on public.site_settings for select
+using (key = 'instagram_links');
+
+create policy "Admins can manage products"
+on public.products for all
+using (exists (select 1 from public.admin_users where user_id = auth.uid()))
+with check (exists (select 1 from public.admin_users where user_id = auth.uid()));
+
+create policy "Admins can manage Instagram settings"
+on public.site_settings for all
+using (exists (select 1 from public.admin_users where user_id = auth.uid()))
+with check (exists (select 1 from public.admin_users where user_id = auth.uid()));
+
+insert into public.site_settings (key, value)
+values ('instagram_links', '["https://www.instagram.com/theyarnside.co/"]'::jsonb)
+on conflict (key) do nothing;

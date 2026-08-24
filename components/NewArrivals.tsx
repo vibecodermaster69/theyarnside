@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { Heart, ShoppingBag } from "lucide-react";
+import { createSupabaseBrowserClient } from "@/lib/supabase";
 
 interface Product {
   id: number;
@@ -14,7 +15,7 @@ interface Product {
 }
 
 export default function NewArrivals() {
-  const products: Product[] = [
+  const fallbackProducts: Product[] = [
     {
       id: 1,
       name: "Daisy Market Tote",
@@ -49,8 +50,34 @@ export default function NewArrivals() {
     },
   ];
 
-  // Client-side wishlist state
+  const [products, setProducts] = useState<Product[]>(fallbackProducts);
   const [wishlist, setWishlist] = useState<number[]>([]);
+
+  useEffect(() => {
+    let client;
+    try {
+      client = createSupabaseBrowserClient();
+    } catch {
+      return;
+    }
+
+    client
+      .from("products")
+      .select("id, name, category, price_inr, image_url, is_new")
+      .eq("is_active", true)
+      .order("created_at", { ascending: false })
+      .then(({ data, error }) => {
+        if (error || !data?.length) return;
+        setProducts(data.map((product) => ({
+          id: product.id,
+          name: product.name,
+          category: product.category,
+          price: `₹${product.price_inr.toLocaleString("en-IN")}`,
+          image: product.image_url || "/assets/02_website_assets/product_images/daisy_market_tote.png",
+          isNew: product.is_new,
+        })));
+      });
+  }, []);
 
   const toggleWishlist = (id: number) => {
     if (wishlist.includes(id)) {

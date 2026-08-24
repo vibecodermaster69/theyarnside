@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import { createSupabaseBrowserClient } from "@/lib/supabase";
 // Custom Instagram SVG Icon
 const InstagramIcon = ({ size = 18, className }: { size?: number; className?: string }) => (
   <svg
@@ -55,6 +56,27 @@ export default function InstagramGrid() {
       alt: "Colorful natural cotton yarn balls",
     },
   ];
+  const [postLinks, setPostLinks] = useState(posts.map((post) => post.link));
+
+  useEffect(() => {
+    let client;
+    try {
+      client = createSupabaseBrowserClient();
+    } catch {
+      return;
+    }
+
+    client
+      .from("site_settings")
+      .select("value")
+      .eq("key", "instagram_links")
+      .maybeSingle()
+      .then(({ data }) => {
+        if (Array.isArray(data?.value)) {
+          setPostLinks(data.value.filter((link): link is string => typeof link === "string"));
+        }
+      });
+  }, []);
 
   return (
     <section id="journal" className="section-padding instagram-section">
@@ -69,7 +91,7 @@ export default function InstagramGrid() {
         <div className="instagram-grid">
           {posts.map((post, index) => (
             <a
-              href={post.link}
+              href={postLinks[index] || post.link}
               key={index}
               target="_blank"
               rel="noopener noreferrer"
