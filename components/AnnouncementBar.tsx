@@ -13,7 +13,7 @@ export default function AnnouncementBar() {
       textTransform: "uppercase",
       fontFamily: "var(--font-lato), sans-serif",
     }}>
-      Free Shipping on Orders ₹6,000+
+      Free Shipping on Orders ₹ 2,000+
     </div>
   );
 }

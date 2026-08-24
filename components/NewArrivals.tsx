@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { Heart, ShoppingBag } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
-import { useCart } from "@/components/CartProvider";
+import RequestOrderModal from "@/components/RequestOrderModal";
 
 interface Product {
   id: number;
@@ -54,7 +54,7 @@ export default function NewArrivals() {
 
   const [products, setProducts] = useState<Product[]>(fallbackProducts);
   const [wishlist, setWishlist] = useState<number[]>([]);
-  const { addItem } = useCart();
+  const [requestProduct, setRequestProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     let client;
@@ -139,10 +139,13 @@ export default function NewArrivals() {
                 
                 <div className="product-footer">
                   <span className="product-price text-serif">{product.price}</span>
-                  <button className="add-to-cart-btn touch-target" aria-label={`Add ${product.name} to Cart`} onClick={() => addItem({ id: product.id, name: product.name, priceInr: product.priceInr ?? Number(product.price.replace(/[^0-9]/g, "")), image: product.image })}>
-                    <ShoppingBag size={16} />
-                    <span>Add</span>
-                  </button>
+                  <div className="stock-actions">
+                    <span className="out-of-stock">Out of stock</span>
+                    <button className="request-order-btn touch-target" aria-label={`Request an order for ${product.name}`} onClick={() => setRequestProduct(product)}>
+                      <ShoppingBag size={16} />
+                      <span>Request order</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -155,6 +158,8 @@ export default function NewArrivals() {
           </a>
         </div>
       </div>
+
+      {requestProduct && <RequestOrderModal product={{ id: requestProduct.id, name: requestProduct.name, priceInr: requestProduct.priceInr ?? Number(requestProduct.price.replace(/[^0-9]/g, "")) }} onClose={() => setRequestProduct(null)} />}
 
       <style jsx>{`
         .products-section {
@@ -261,7 +266,23 @@ export default function NewArrivals() {
           font-weight: 700;
         }
 
-        .add-to-cart-btn {
+        .stock-actions {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 8px;
+        }
+
+        .out-of-stock {
+          color: rgba(75, 58, 50, 0.58);
+          font-family: var(--font-lato), sans-serif;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+        }
+
+        .request-order-btn {
           display: inline-flex;
           align-items: center;
           gap: 6px;
@@ -276,7 +297,7 @@ export default function NewArrivals() {
           transition: var(--transition-fast);
         }
 
-        .add-to-cart-btn:hover {
+        .request-order-btn:hover {
           background-color: var(--sage-hover);
           transform: scale(1.03);
         }

@@ -44,7 +44,7 @@ export default function MakerStory() {
           </p>
 
           <p className="story-text tagline italic">
-            "Made one loop at a time, just for you."
+            "Made with love, one loop at a time"
           </p>
 
           <div className="story-signature">

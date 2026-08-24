@@ -12,8 +12,8 @@ export default function WhyHandmade() {
     },
     {
       icon: <Sun size={28} strokeWidth={1.5} />,
-      title: "Premium Natural Yarns",
-      desc: "We source only premium natural fibers—soft organic cotton, merino wool, and cozy alpaca—that feel luxurious, breathe naturally, and last for years.",
+      title: "Premium Yarns & Fibers",
+      desc: "We thoughtfully choose from soft organic cotton, merino wool, cozy alpaca, durable acrylic, bamboo, and linen yarns to match each piece’s texture, comfort, and everyday use.",
     },
     {
       icon: <ShieldCheck size={28} strokeWidth={1.5} />,

@@ -33,7 +33,22 @@ type Order = {
   created_at: string;
 };
 
+type OrderRequest = {
+  id: number;
+  product_name: string;
+  quantity: number;
+  customer_name: string;
+  phone: string;
+  shipping_address: string;
+  budget_inr: number;
+  timeframe: string;
+  notes: string | null;
+  status: string;
+  created_at: string;
+};
+
 const orderStatuses = ["new", "contacted", "payment_pending", "paid", "making", "shipped", "completed", "cancelled"];
+const requestStatuses = ["new", "contacted", "accepted", "declined", "completed"];
 
 const emptyProduct: ProductDraft = {
   name: "",
@@ -54,6 +69,7 @@ export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [orderRequests, setOrderRequests] = useState<OrderRequest[]>([]);
   const [draft, setDraft] = useState<ProductDraft>(emptyProduct);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [instagramLinks, setInstagramLinks] = useState<string[]>([]);
@@ -90,10 +106,11 @@ export default function AdminPage() {
   async function loadData() {
     if (!supabase) return;
     setMessage("");
-    const [{ data: productRows, error: productError }, { data: settingRow }, { data: orderRows, error: orderError }] = await Promise.all([
+    const [{ data: productRows, error: productError }, { data: settingRow }, { data: orderRows, error: orderError }, { data: requestRows, error: requestError }] = await Promise.all([
       supabase.from("products").select("*").order("created_at", { ascending: false }),
       supabase.from("site_settings").select("value").eq("key", "instagram_links").maybeSingle(),
       supabase.from("orders").select("*").order("created_at", { ascending: false }),
+      supabase.from("order_requests").select("*").order("created_at", { ascending: false }),
     ]);
 
     if (productError) {
@@ -103,6 +120,7 @@ export default function AdminPage() {
 
     setProducts((productRows ?? []) as Product[]);
     if (!orderError) setOrders((orderRows ?? []) as Order[]);
+    if (!requestError) setOrderRequests((requestRows ?? []) as OrderRequest[]);
     const links = settingRow?.value;
     setInstagramLinks(Array.isArray(links) ? links.filter((link): link is string => typeof link === "string") : []);
   }
@@ -157,6 +175,18 @@ export default function AdminPage() {
     setBusy(false);
   }
 
+  function downloadOrderRequests() {
+    const headers = ["Request ID", "Created", "Product", "Quantity", "Customer", "Phone", "Shipping Address", "Budget INR", "Timeframe", "Notes", "Status"];
+    const escapeCell = (value: string | number | null) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+    const rows = orderRequests.map((request) => [request.id, new Date(request.created_at).toLocaleString("en-IN"), request.product_name, request.quantity, request.customer_name, request.phone, request.shipping_address, request.budget_inr, request.timeframe.replaceAll("_", " "), request.notes, request.status]);
+    const csv = [headers, ...rows].map((row) => row.map(escapeCell).join(",")).join("\r\n");
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8" }));
+    link.download = `theyarnside-order-requests-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
+
   if (!sessionEmail) {
     return (
       <main className="admin-page">
@@ -200,6 +230,17 @@ export default function AdminPage() {
             <button type="submit" disabled={busy}><Save size={16} /> {editingId ? "Update product" : "Add product"}</button>
           </form>
           <div className="product-list">{products.map((product) => <article className="product-row" key={product.id}><div><strong>{product.name}</strong><span>{product.category} · ₹{product.price_inr.toLocaleString("en-IN")} · {product.stock_quantity} in stock</span></div><div className="row-actions"><button aria-label={`Edit ${product.name}`} onClick={() => { setEditingId(product.id); setDraft({ ...product, description: product.description ?? "", image_url: product.image_url ?? "" }); }}><Save size={16} /></button><button aria-label={`Delete ${product.name}`} onClick={() => deleteProduct(product.id)}><Trash2 size={16} /></button></div></article>)}</div>
+        </section>
+
+        <section className="admin-section">
+          <div className="section-heading"><div><p className="admin-eyebrow">MADE TO ORDER</p><h2>Request orders</h2></div><button className="secondary-button" onClick={downloadOrderRequests} disabled={!orderRequests.length}>Download Excel CSV</button></div>
+          {!orderRequests.length ? <p>No request orders yet.</p> : <div className="order-list">{orderRequests.map((request) => <article className="order-card" key={request.id}>
+            <div className="order-card-header"><div><strong>Request #{request.id} · {request.product_name}</strong><span>{new Date(request.created_at).toLocaleString("en-IN")}</span></div><select value={request.status} onChange={async (event) => { if (!supabase) return; const nextStatus = event.target.value; const { error } = await supabase.from("order_requests").update({ status: nextStatus }).eq("id", request.id); setMessage(error ? error.message : `Request #${request.id} updated.`); if (!error) setOrderRequests(orderRequests.map((item) => item.id === request.id ? { ...item, status: nextStatus } : item)); }}>{requestStatuses.map((status) => <option key={status} value={status}>{status}</option>)}</select></div>
+            <p><strong>{request.customer_name}</strong> · {request.phone} · Quantity: {request.quantity}</p>
+            <p>{request.shipping_address}</p>
+            <p>Budget: ₹{request.budget_inr.toLocaleString("en-IN")} · Timing: {request.timeframe.replaceAll("_", " ")}</p>
+            {request.notes && <p className="order-notes">Note: {request.notes}</p>}
+          </article>)}</div>}
         </section>
 
         <section className="admin-section">

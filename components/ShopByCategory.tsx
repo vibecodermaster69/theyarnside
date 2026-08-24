@@ -22,7 +22,7 @@ export default function ShopByCategory() {
     },
     {
       title: "Accessories & Gifts",
-      image: "/assets/02_website_assets/category_banners/kits_and_bundles.png",
+      image: "/assets/02_website_assets/category_banners/accessories_gifts.png",
       link: "#shop?category=accessories-gifts",
     },
   ];

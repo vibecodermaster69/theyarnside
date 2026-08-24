@@ -7,7 +7,7 @@ export default function CustomOrders() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    category: "bag",
+    category: "flowers-bouquets",
     details: "",
   });
 
@@ -100,11 +100,18 @@ export default function CustomOrders() {
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                   >
-                    <option value="bag">Handmade Crochet Bag</option>
-                    <option value="amigurumi">Amigurumi Toy</option>
-                    <option value="blanket">Crochet Blanket</option>
-                    <option value="wearable">Wearable / Beanie</option>
-                    <option value="other">Other Custom Idea</option>
+                    <option value="flowers-bouquets">Flowers &amp; Bouquets</option>
+                    <option value="toys-plushies">Toys &amp; Plushies</option>
+                    <option value="keychains-charms">Keychains &amp; Charms</option>
+                    <option value="bags-pouches">Bags &amp; Pouches</option>
+                    <option value="hair-fashion-accessories">Hair &amp; Fashion Accessories</option>
+                    <option value="wearables">Wearables</option>
+                    <option value="home-lifestyle">Home &amp; Lifestyle</option>
+                    <option value="blankets-throws">Blankets &amp; Throws</option>
+                    <option value="baby-kids">Baby &amp; Kids</option>
+                    <option value="gifts">Gifts</option>
+                    <option value="custom-orders">Custom Orders</option>
+                    <option value="others">Others</option>
                   </select>
                 </div>
 
