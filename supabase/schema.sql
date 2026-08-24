@@ -71,6 +71,19 @@ create table public.site_settings (
 alter table public.admin_users enable row level security;
 alter table public.site_settings enable row level security;
 
+create policy "Admins can view orders"
+on public.orders for select
+using (exists (select 1 from public.admin_users where user_id = auth.uid()));
+
+create policy "Admins can update orders"
+on public.orders for update
+using (exists (select 1 from public.admin_users where user_id = auth.uid()))
+with check (exists (select 1 from public.admin_users where user_id = auth.uid()));
+
+create policy "Admins can view order items"
+on public.order_items for select
+using (exists (select 1 from public.admin_users where user_id = auth.uid()));
+
 create policy "Admins can view their own admin record"
 on public.admin_users for select
 using (user_id = auth.uid());

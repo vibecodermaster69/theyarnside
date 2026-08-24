@@ -11,10 +11,12 @@ import CustomOrders from "@/components/CustomOrders";
 import InstagramGrid from "@/components/InstagramGrid";
 import Reviews from "@/components/Reviews";
 import Footer from "@/components/Footer";
+import CartDrawer from "@/components/CartDrawer";
+import { CartProvider } from "@/components/CartProvider";
 
 export default function Home() {
   return (
-    <>
+    <CartProvider>
       {/* 1. Announcement Bar */}
       <AnnouncementBar />
       
@@ -52,6 +54,7 @@ export default function Home() {
 
       {/* 12. Footer (including Newsletter Signup) */}
       <Footer />
-    </>
+      <CartDrawer />
+    </CartProvider>
   );
 }

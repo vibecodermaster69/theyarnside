@@ -21,6 +21,20 @@ type Product = {
 
 type ProductDraft = Omit<Product, "id">;
 
+type Order = {
+  id: number;
+  customer_name: string;
+  customer_email: string | null;
+  customer_phone: string;
+  delivery_address: string;
+  notes: string | null;
+  status: string;
+  total_inr: number;
+  created_at: string;
+};
+
+const orderStatuses = ["new", "contacted", "payment_pending", "paid", "making", "shipped", "completed", "cancelled"];
+
 const emptyProduct: ProductDraft = {
   name: "",
   slug: "",
@@ -39,6 +53,7 @@ export default function AdminPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [draft, setDraft] = useState<ProductDraft>(emptyProduct);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [instagramLinks, setInstagramLinks] = useState<string[]>([]);
@@ -75,9 +90,10 @@ export default function AdminPage() {
   async function loadData() {
     if (!supabase) return;
     setMessage("");
-    const [{ data: productRows, error: productError }, { data: settingRow }] = await Promise.all([
+    const [{ data: productRows, error: productError }, { data: settingRow }, { data: orderRows, error: orderError }] = await Promise.all([
       supabase.from("products").select("*").order("created_at", { ascending: false }),
       supabase.from("site_settings").select("value").eq("key", "instagram_links").maybeSingle(),
+      supabase.from("orders").select("*").order("created_at", { ascending: false }),
     ]);
 
     if (productError) {
@@ -86,6 +102,7 @@ export default function AdminPage() {
     }
 
     setProducts((productRows ?? []) as Product[]);
+    if (!orderError) setOrders((orderRows ?? []) as Order[]);
     const links = settingRow?.value;
     setInstagramLinks(Array.isArray(links) ? links.filter((link): link is string => typeof link === "string") : []);
   }
@@ -186,6 +203,17 @@ export default function AdminPage() {
         </section>
 
         <section className="admin-section">
+          <div className="section-heading"><div><p className="admin-eyebrow">ORDERS</p><h2>Order requests</h2></div><button className="secondary-button" onClick={loadData}>Refresh</button></div>
+          {!orders.length ? <p>No order requests yet.</p> : <div className="order-list">{orders.map((order) => <article className="order-card" key={order.id}>
+            <div className="order-card-header"><div><strong>Order #{order.id}</strong><span>{new Date(order.created_at).toLocaleString("en-IN")}</span></div><select value={order.status} onChange={async (event) => { if (!supabase) return; const nextStatus = event.target.value; const { error } = await supabase.from("orders").update({ status: nextStatus }).eq("id", order.id); setMessage(error ? error.message : `Order #${order.id} updated.`); if (!error) setOrders(orders.map((item) => item.id === order.id ? { ...item, status: nextStatus } : item)); }}>{orderStatuses.map((status) => <option key={status} value={status}>{status.replace("_", " ")}</option>)}</select></div>
+            <p><strong>{order.customer_name}</strong> · {order.customer_phone}{order.customer_email ? ` · ${order.customer_email}` : ""}</p>
+            <p>{order.delivery_address}</p>
+            {order.notes && <p className="order-notes">Note: {order.notes}</p>}
+            <strong>{`₹${order.total_inr.toLocaleString("en-IN")}`}</strong>
+          </article>)}</div>}
+        </section>
+
+        <section className="admin-section">
           <div className="section-heading"><div><p className="admin-eyebrow">SOCIAL</p><h2>Instagram links</h2></div></div>
           <form onSubmit={saveInstagramLinks} className="links-form">
             {instagramLinks.map((link, index) => <div className="link-row" key={`${index}-${link}`}><input type="url" value={link} onChange={(event) => setInstagramLinks(instagramLinks.map((item, itemIndex) => itemIndex === index ? event.target.value : item))} /><button type="button" aria-label="Remove Instagram link" onClick={() => setInstagramLinks(instagramLinks.filter((_, itemIndex) => itemIndex !== index))}><Trash2 size={16} /></button></div>)}
@@ -230,6 +258,13 @@ function AdminStyles() {
     .link-row input { flex: 1; }
     .links-form > button { justify-self: start; }
     .admin-message { padding: 12px; background: var(--sage-light); border-left: 3px solid var(--sage); }
-    @media (max-width: 640px) { .admin-page { padding: 24px 16px; } .admin-section, .admin-login { padding: 24px; } .product-form { grid-template-columns: 1fr; } .product-form .wide, .product-form button { grid-column: auto; } .admin-header, .section-heading { align-items: flex-start; flex-direction: column; } .product-row { align-items: flex-start; } }
+    .order-list { display: grid; gap: 12px; margin-top: 24px; }
+    .order-card { padding: 18px; border: 1px solid rgba(75,58,50,.12); background: var(--cream); }
+    .order-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+    .order-card-header span { display: block; margin-top: 4px; color: rgba(75,58,50,.65); font-size: 12px; }
+    .order-card-header select { width: auto; min-width: 150px; }
+    .order-card p { margin: 6px 0; font-size: 14px; }
+    .order-notes { color: rgba(75,58,50,.75); font-style: italic; }
+    @media (max-width: 640px) { .admin-page { padding: 24px 16px; } .admin-section, .admin-login { padding: 24px; } .product-form { grid-template-columns: 1fr; } .product-form .wide, .product-form button { grid-column: auto; } .admin-header, .section-heading, .order-card-header { align-items: flex-start; flex-direction: column; } .product-row { align-items: flex-start; } .order-card-header select { width: 100%; } }
   `}</style>;
 }

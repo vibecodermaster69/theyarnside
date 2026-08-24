@@ -4,9 +4,11 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Search, User, ShoppingBag, Menu, X } from "lucide-react";
+import { useCart } from "@/components/CartProvider";
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { itemCount, openCart } = useCart();
 
   // Custom Pinterest SVG Icon since Lucide doesn't include it by default
   const PinterestIcon = ({ size = 18 }: { size?: number }) => (
@@ -134,9 +136,9 @@ export default function Header() {
           <button className="util-button touch-target hide-mobile" aria-label="Profile">
             <User size={20} />
           </button>
-          <button className="util-button touch-target cart-btn" aria-label="Shopping Cart">
+          <button className="util-button touch-target cart-btn" aria-label={`Shopping Cart${itemCount ? `, ${itemCount} items` : ""}`} onClick={openCart}>
             <ShoppingBag size={20} />
-            <span className="cart-badge">0</span>
+            {itemCount > 0 && <span className="cart-badge">{itemCount > 9 ? "9+" : itemCount}</span>}
           </button>
         </div>
       </div>

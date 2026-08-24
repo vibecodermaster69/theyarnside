@@ -4,12 +4,14 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { Heart, ShoppingBag } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
+import { useCart } from "@/components/CartProvider";
 
 interface Product {
   id: number;
   name: string;
   category: string;
   price: string;
+  priceInr?: number;
   image: string;
   isNew: boolean;
 }
@@ -52,6 +54,7 @@ export default function NewArrivals() {
 
   const [products, setProducts] = useState<Product[]>(fallbackProducts);
   const [wishlist, setWishlist] = useState<number[]>([]);
+  const { addItem } = useCart();
 
   useEffect(() => {
     let client;
@@ -136,7 +139,7 @@ export default function NewArrivals() {
                 
                 <div className="product-footer">
                   <span className="product-price text-serif">{product.price}</span>
-                  <button className="add-to-cart-btn touch-target" aria-label="Add to Cart">
+                  <button className="add-to-cart-btn touch-target" aria-label={`Add ${product.name} to Cart`} onClick={() => addItem({ id: product.id, name: product.name, priceInr: product.priceInr ?? Number(product.price.replace(/[^0-9]/g, "")), image: product.image })}>
                     <ShoppingBag size={16} />
                     <span>Add</span>
                   </button>
