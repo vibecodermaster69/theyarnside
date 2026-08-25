@@ -22,6 +22,14 @@ create table public.orders (
   notes text,
   status text not null default 'new' check (status in ('new', 'contacted', 'payment_pending', 'paid', 'making', 'shipped', 'completed', 'cancelled')),
   total_inr integer not null default 0 check (total_inr >= 0),
+  pickup_status text not null default 'not_requested' check (pickup_status in ('not_requested', 'requested', 'picked_up')),
+  pickup_requested_at timestamptz,
+  shiprocket_order_id text,
+  shiprocket_shipment_id text,
+  awb_code text,
+  courier_name text,
+  tracking_url text,
+  stock_restored_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -230,3 +238,45 @@ end;
 $$;
 
 grant execute on function public.create_order(text, text, text, text, text, jsonb) to anon, authenticated;
+
+create or replace function public.cancel_order(p_order_id bigint)
+returns public.orders
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_order public.orders%rowtype;
+  v_item public.order_items%rowtype;
+begin
+  if not exists (select 1 from public.admin_users where user_id = auth.uid()) then
+    raise exception 'Only admins can cancel orders';
+  end if;
+
+  select * into v_order from public.orders where id = p_order_id for update;
+  if not found then
+    raise exception 'Order not found';
+  end if;
+
+  if v_order.stock_restored_at is null then
+    for v_item in select * from public.order_items where order_id = p_order_id loop
+      update public.products
+      set stock_quantity = stock_quantity + v_item.quantity,
+          updated_at = now()
+      where id = v_item.product_id;
+    end loop;
+
+    update public.orders
+    set status = 'cancelled',
+        stock_restored_at = coalesce(stock_restored_at, now()),
+        updated_at = now()
+    where id = p_order_id
+    returning * into v_order;
+  end if;
+
+  return v_order;
+end;
+$$;
+
+revoke execute on function public.cancel_order(bigint) from public, anon;
+grant execute on function public.cancel_order(bigint) to authenticated;

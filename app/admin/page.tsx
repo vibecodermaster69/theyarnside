@@ -1,10 +1,11 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
-import { Copy, LogOut, Plus, Save, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { ChevronRight, ClipboardList, Copy, LogOut, Plus, RefreshCw, Save, Trash2 } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
 
-const categories = ["amigurumi", "wearables", "home-decor", "accessories-gifts", "hair-fashion-accessories", "keychains-charms"];
+const defaultCategories = ["amigurumi", "wearables", "home-decor", "accessories-gifts", "hair-fashion-accessories", "keychains-charms"];
 
 type Product = {
   id: number;
@@ -80,6 +81,8 @@ export default function AdminPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [orderRequests, setOrderRequests] = useState<OrderRequest[]>([]);
   const [draft, setDraft] = useState<ProductDraft>(emptyProduct);
+  const [categories, setCategories] = useState(defaultCategories);
+  const [newCategory, setNewCategory] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [instagramLinks, setInstagramLinks] = useState<string[]>([]);
   const [message, setMessage] = useState("");
@@ -116,9 +119,10 @@ export default function AdminPage() {
   async function loadData() {
     if (!supabase) return;
     setMessage("");
-    const [{ data: productRows, error: productError }, { data: settingRow }, { data: orderRows, error: orderError }, { data: requestRows, error: requestError }] = await Promise.all([
+    const [{ data: productRows, error: productError }, { data: settingRow }, { data: categorySetting }, { data: orderRows, error: orderError }, { data: requestRows, error: requestError }] = await Promise.all([
       supabase.from("products").select("*").order("created_at", { ascending: false }),
       supabase.from("site_settings").select("value").eq("key", "instagram_links").maybeSingle(),
+      supabase.from("site_settings").select("value").eq("key", "product_categories").maybeSingle(),
       supabase.from("orders").select("*, order_items(*)").order("created_at", { ascending: false }),
       supabase.from("order_requests").select("*").order("created_at", { ascending: false }),
     ]);
@@ -133,6 +137,10 @@ export default function AdminPage() {
     if (!requestError) setOrderRequests((requestRows ?? []) as OrderRequest[]);
     const links = settingRow?.value;
     setInstagramLinks(Array.isArray(links) ? links.filter((link): link is string => typeof link === "string") : []);
+    const savedCategories = categorySetting?.value;
+    if (Array.isArray(savedCategories)) {
+      setCategories(Array.from(new Set([...defaultCategories, ...savedCategories.filter((category): category is string => typeof category === "string")] )));
+    }
   }
 
   async function signIn(event: FormEvent) {
@@ -164,6 +172,30 @@ export default function AdminPage() {
     setBusy(false);
   }
 
+  async function addCategory(event: FormEvent) {
+    event.preventDefault();
+    if (!supabase) return;
+    const slug = newCategory.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    if (!slug) {
+      setMessage("Enter a category name first.");
+      return;
+    }
+    if (categories.includes(slug)) {
+      setMessage("That category already exists.");
+      return;
+    }
+    setBusy(true);
+    const nextCategories = [...categories, slug];
+    const { error } = await supabase.from("site_settings").upsert({ key: "product_categories", value: nextCategories });
+    setMessage(error ? error.message : "Category added.");
+    if (!error) {
+      setCategories(nextCategories);
+      setDraft((current) => ({ ...current, category: slug }));
+      setNewCategory("");
+    }
+    setBusy(false);
+  }
+
   async function deleteProduct(id: number) {
     if (!supabase) return;
     if (!window.confirm("Delete this product?")) return;
@@ -183,6 +215,20 @@ export default function AdminPage() {
     setMessage(error ? error.message : "Instagram links saved.");
     setInstagramLinks(links);
     setBusy(false);
+  }
+
+  async function updateOrderStatus(orderId: number, nextStatus: string) {
+    if (!supabase) return;
+    if (nextStatus === "cancelled") {
+      if (!window.confirm(`Cancel order #${orderId} and add its items back to stock?`)) return;
+      const { error } = await supabase.rpc("cancel_order", { p_order_id: orderId });
+      setMessage(error ? error.message : `Order #${orderId} cancelled and stock restored.`);
+      if (!error) await loadData();
+      return;
+    }
+    const { error } = await supabase.from("orders").update({ status: nextStatus }).eq("id", orderId);
+    setMessage(error ? error.message : `Order #${orderId} updated.`);
+    if (!error) setOrders(orders.map((item) => item.id === orderId ? { ...item, status: nextStatus } : item));
   }
 
   async function uploadProductImage(event: ChangeEvent<HTMLInputElement>) {
@@ -230,6 +276,10 @@ export default function AdminPage() {
     URL.revokeObjectURL(link.href);
   }
 
+  function renderProductRows(items: Product[]) {
+    return items.map((product) => <article className="product-row" key={product.id}><div><strong>{product.name}</strong><span>{product.category} · ₹{product.price_inr.toLocaleString("en-IN")} · {product.stock_quantity} in stock</span></div><div className="row-actions"><button aria-label={`Edit ${product.name}`} onClick={() => { setEditingId(product.id); setDraft({ ...product, description: product.description ?? "", image_url: product.image_url ?? "" }); }}><Save size={16} /></button><button aria-label={`Delete ${product.name}`} onClick={() => deleteProduct(product.id)}><Trash2 size={16} /></button></div></article>);
+  }
+
   if (!sessionEmail) {
     return (
       <main className="admin-page">
@@ -254,12 +304,16 @@ export default function AdminPage() {
       <div className="admin-shell">
         <header className="admin-header">
           <div><p className="admin-eyebrow">THE YARN SIDE</p><h1>Store admin</h1><p>{sessionEmail}</p></div>
-          <button className="secondary-button" onClick={() => supabase?.auth.signOut()}><LogOut size={16} /> Sign out</button>
+          <div className="admin-header-actions"><Link className="admin-orders-tab" href="/admin/orders"><span className="admin-orders-icon"><ClipboardList size={21} /></span><span className="admin-orders-copy"><strong>Orders</strong><small>Manage fulfilment</small></span><span className="admin-orders-count">{orders.length + orderRequests.length}</span><ChevronRight className="admin-orders-arrow" size={18} /></Link><button className="secondary-button" onClick={loadData} disabled={busy}><RefreshCw size={16} /> Refresh data</button><button className="secondary-button" onClick={() => supabase?.auth.signOut()}><LogOut size={16} /> Sign out</button></div>
         </header>
         {message && <p className="admin-message">{message}</p>}
 
         <section className="admin-section">
           <div className="section-heading"><div><p className="admin-eyebrow">CATALOGUE</p><h2>{editingId ? "Edit product" : "Add product"}</h2></div>{editingId && <button className="secondary-button" onClick={() => { setDraft(emptyProduct); setEditingId(null); }}>Cancel</button>}</div>
+          <form className="category-form" onSubmit={addCategory}>
+            <label>New category name<input value={newCategory} onChange={(event) => setNewCategory(event.target.value)} placeholder="e.g. Baby Blankets" /></label>
+            <button type="submit" disabled={busy}><Plus size={16} /> Create category</button>
+          </form>
           <form className="product-form" onSubmit={saveProduct}>
             <label>Product name<input required value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} /></label>
             <label>Slug<input required value={draft.slug} onChange={(event) => setDraft({ ...draft, slug: event.target.value })} placeholder="daisy-market-tote" /></label>
@@ -269,7 +323,7 @@ export default function AdminPage() {
             <div className="image-upload-field wide">
               <label>Upload product image<input type="file" accept="image/png,image/jpeg,image/webp" onChange={uploadProductImage} disabled={uploadingImage} /></label>
               <p className="field-help">Recommended: 4:5 portrait ratio, exactly 1200 × 1500 px, JPG/PNG/WebP, under 5 MB.</p>
-              {draft.image_url && <img className="image-preview" src={draft.image_url} alt="Product preview" />}
+              {draft.image_url && <div className="product-preview"><p className="preview-label">Storefront preview</p><div className="preview-card"><div className="preview-image-wrap"><img src={draft.image_url} alt="Product preview" /></div><div className="preview-info"><span>{categories.find((category) => category === draft.category) || draft.category}</span><strong>{draft.name || "Product name"}</strong><b>₹{Number(draft.price_inr || 0).toLocaleString("en-IN")}</b></div></div><p className="field-help">This uses the same 4:5 crop and card proportions as the shop and New Arrivals pages.</p></div>}
               <label>Image URL fallback<input value={draft.image_url ?? ""} onChange={(event) => setDraft({ ...draft, image_url: event.target.value })} placeholder="/assets/... or https://..." /></label>
               <div className="prompt-box"><div><strong>AI resizing prompt</strong><p>{imagePrompt}</p></div><button type="button" className="secondary-button" onClick={copyImagePrompt}><Copy size={15} /> Copy prompt</button></div>
             </div>
@@ -278,7 +332,10 @@ export default function AdminPage() {
             <label className="check"><input type="checkbox" checked={draft.is_active} onChange={(event) => setDraft({ ...draft, is_active: event.target.checked })} /> Visible on website</label>
             <button type="submit" disabled={busy || uploadingImage}><Save size={16} /> {editingId ? "Update product" : "Add product"}</button>
           </form>
-          <div className="product-list">{products.map((product) => <article className="product-row" key={product.id}><div><strong>{product.name}</strong><span>{product.category} · ₹{product.price_inr.toLocaleString("en-IN")} · {product.stock_quantity} in stock</span></div><div className="row-actions"><button aria-label={`Edit ${product.name}`} onClick={() => { setEditingId(product.id); setDraft({ ...product, description: product.description ?? "", image_url: product.image_url ?? "" }); }}><Save size={16} /></button><button aria-label={`Delete ${product.name}`} onClick={() => deleteProduct(product.id)}><Trash2 size={16} /></button></div></article>)}</div>
+          <div className="product-groups">
+            <div className="product-group"><h3>New arrivals <span>{products.filter((product) => product.is_new).length}</span></h3>{products.filter((product) => product.is_new).length ? <div className="product-list">{renderProductRows(products.filter((product) => product.is_new))}</div> : <p>No products marked as new.</p>}</div>
+            <div className="product-group"><h3>Other web products <span>{products.filter((product) => !product.is_new).length}</span></h3>{products.filter((product) => !product.is_new).length ? <div className="product-list">{renderProductRows(products.filter((product) => !product.is_new))}</div> : <p>No other products listed.</p>}</div>
+          </div>
         </section>
 
         <section className="admin-section">
@@ -295,7 +352,7 @@ export default function AdminPage() {
         <section className="admin-section">
           <div className="section-heading"><div><p className="admin-eyebrow">ORDERS</p><h2>Order requests</h2></div><button className="secondary-button" onClick={loadData}>Refresh</button></div>
           {!orders.length ? <p>No order requests yet.</p> : <div className="order-list">{orders.map((order) => <article className="order-card" key={order.id}>
-            <div className="order-card-header"><div><strong>Order #{order.id}</strong><span>{new Date(order.created_at).toLocaleString("en-IN")}</span></div><select value={order.status} onChange={async (event) => { if (!supabase) return; const nextStatus = event.target.value; const { error } = await supabase.from("orders").update({ status: nextStatus }).eq("id", order.id); setMessage(error ? error.message : `Order #${order.id} updated.`); if (!error) setOrders(orders.map((item) => item.id === order.id ? { ...item, status: nextStatus } : item)); }}>{orderStatuses.map((status) => <option key={status} value={status}>{status.replace("_", " ")}</option>)}</select></div>
+            <div className="order-card-header"><div><strong>Order #{order.id}</strong><span>{new Date(order.created_at).toLocaleString("en-IN")}</span></div><select value={order.status} onChange={(event) => { void updateOrderStatus(order.id, event.target.value); }}>{orderStatuses.map((status) => <option key={status} value={status}>{status.replace("_", " ")}</option>)}</select></div>
             <p><strong>{order.customer_name}</strong> · {order.customer_phone}{order.customer_email ? ` · ${order.customer_email}` : ""}</p>
             <div className="order-products"><strong>Products</strong>{order.order_items?.length ? order.order_items.map((item) => <div className="order-product" key={item.id}><span>{item.product_name} x {item.quantity}</span><span>₹{(item.unit_price_inr * item.quantity).toLocaleString("en-IN")}</span></div>) : <p>Product details unavailable for this order.</p>}</div>
             <p>{order.delivery_address}</p>
@@ -305,10 +362,11 @@ export default function AdminPage() {
         </section>
 
         <section className="admin-section">
-          <div className="section-heading"><div><p className="admin-eyebrow">SOCIAL</p><h2>Instagram links</h2></div></div>
+          <div className="section-heading"><div><p className="admin-eyebrow">SOCIAL</p><h2>Instagram links</h2><p className="section-help">Add Instagram post, carousel, reel, or video URLs. Supported links display as embedded Instagram cards in Behind the Loops.</p></div></div>
           <form onSubmit={saveInstagramLinks} className="links-form">
-            {instagramLinks.map((link, index) => <div className="link-row" key={`${index}-${link}`}><input type="url" value={link} onChange={(event) => setInstagramLinks(instagramLinks.map((item, itemIndex) => itemIndex === index ? event.target.value : item))} /><button type="button" aria-label="Remove Instagram link" onClick={() => setInstagramLinks(instagramLinks.filter((_, itemIndex) => itemIndex !== index))}><Trash2 size={16} /></button></div>)}
-            <button type="button" className="secondary-button" onClick={() => setInstagramLinks([...instagramLinks, "https://www.instagram.com/theyarnside.co/"])}><Plus size={16} /> Add link</button>
+            {!instagramLinks.length && <p className="empty-links">No Instagram links added yet. Add your first link below.</p>}
+            {instagramLinks.map((link, index) => <div className="link-row" key={`${index}-${link}`}><input type="url" aria-label={`Instagram link ${index + 1}`} placeholder="https://www.instagram.com/p/..." value={link} onChange={(event) => setInstagramLinks(instagramLinks.map((item, itemIndex) => itemIndex === index ? event.target.value : item))} /><button type="button" aria-label="Remove Instagram link" onClick={() => setInstagramLinks(instagramLinks.filter((_, itemIndex) => itemIndex !== index))}><Trash2 size={16} /></button></div>)}
+            <button type="button" className="secondary-button" onClick={() => setInstagramLinks([...instagramLinks, ""])}><Plus size={16} /> Add Instagram link</button>
             <button type="submit" disabled={busy}><Save size={16} /> Save Instagram links</button>
           </form>
         </section>
@@ -328,7 +386,8 @@ function AdminStyles() {
     .admin-page h1 { font-size: 40px; }
     .admin-page h2 { font-size: 26px; }
     .admin-page p { margin: 0 0 16px; }
-    .admin-login form, .product-form, .links-form { display: grid; gap: 16px; margin-top: 28px; }
+    .section-help { max-width: 640px; color: rgba(75,58,50,.7); font-size: 14px; font-weight: 400; }
+    .admin-login form, .product-form, .category-form, .links-form { display: grid; gap: 16px; margin-top: 28px; }
     .admin-page label { display: grid; gap: 6px; font-weight: 700; font-size: 13px; }
     .admin-page input, .admin-page select, .admin-page textarea { width: 100%; padding: 12px; border: 1px solid rgba(75,58,50,.2); background: var(--white); color: var(--cocoa); border-radius: 4px; font: 400 15px var(--font-lato), sans-serif; }
     .admin-page button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 16px; border: 0; background: var(--coral); color: var(--white); font-weight: 700; cursor: pointer; border-radius: 4px; }
@@ -336,16 +395,33 @@ function AdminStyles() {
     .secondary-button { background: transparent !important; color: var(--cocoa) !important; border: 1px solid rgba(75,58,50,.25) !important; }
     .admin-header, .section-heading, .product-row, .link-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
     .admin-header { margin-bottom: 36px; }
+    .admin-header-actions { display: flex; align-items: center; gap: 10px; }
+    .admin-orders-tab { display: inline-flex; align-items: center; gap: 11px; min-width: 220px; padding: 10px 12px 10px 10px; border: 1px solid rgba(75,58,50,.18); border-radius: 10px; background: var(--white); color: var(--cocoa); text-decoration: none; box-shadow: 0 4px 12px rgba(75,58,50,.05); transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
+    .admin-orders-tab:hover { border-color: var(--coral); box-shadow: 0 7px 18px rgba(75,58,50,.1); transform: translateY(-1px); }
+    .admin-orders-icon { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 9px; background: var(--sage-light); color: var(--sage); }
+    .admin-orders-copy { display: grid; gap: 2px; flex: 1; }
+    .admin-orders-copy strong { font-size: 14px; }
+    .admin-orders-copy small { color: rgba(75,58,50,.62); font-size: 11px; }
+    .admin-orders-count { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 999px; background: var(--coral); color: var(--white); font-size: 11px; font-weight: 700; }
+    .admin-orders-arrow { color: rgba(75,58,50,.5); }
     .admin-section { background: var(--white); padding: 32px; margin-bottom: 24px; border: 1px solid rgba(75,58,50,.1); }
+    .category-form { grid-template-columns: minmax(0, 1fr) auto; align-items: end; margin: 24px 0 28px; padding: 16px; background: var(--sage-light); border-left: 3px solid var(--sage); }
+    .category-form button { min-height: 44px; }
     .product-form { grid-template-columns: repeat(2, 1fr); }
     .product-form .wide, .product-form button { grid-column: 1 / -1; }
     .check { display: flex !important; align-items: center; gap: 8px !important; }
     .check input { width: auto; }
+    .product-groups { display: grid; gap: 28px; margin-top: 32px; }
+    .product-group h3 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 18px; }
+    .product-group h3 span { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 999px; background: var(--sage-light); color: var(--cocoa); font: 700 12px var(--font-lato), sans-serif; }
+    .product-group > p { margin-top: 12px; color: rgba(75,58,50,.7); font-size: 14px; }
     .product-list { display: grid; gap: 8px; margin-top: 32px; }
     .product-row { padding: 14px 0; border-top: 1px solid rgba(75,58,50,.1); }
     .product-row span { display: block; margin-top: 4px; color: rgba(75,58,50,.7); font-size: 13px; }
     .row-actions { display: flex; gap: 8px; }
     .row-actions button, .link-row button { padding: 9px; background: transparent; color: var(--cocoa); border: 1px solid rgba(75,58,50,.2); }
+    .row-actions button:first-child { min-width: 72px; }
+    .row-action-label { font-size: 12px; }
     .link-row input { flex: 1; }
     .links-form > button { justify-self: start; }
     .admin-message { padding: 12px; background: var(--sage-light); border-left: 3px solid var(--sage); }
@@ -362,11 +438,19 @@ function AdminStyles() {
     .image-upload-field > label { gap: 8px; }
     .image-upload-field input[type=file] { padding: 9px; }
     .field-help { margin: 0 !important; color: rgba(75,58,50,.7); font-size: 12px !important; font-weight: 400; }
-    .image-preview { width: 140px; height: 175px; object-fit: cover; border: 1px solid rgba(75,58,50,.16); border-radius: 6px; background: var(--cream); }
+    .product-preview { display: grid; gap: 8px; width: min(100%, 280px); }
+    .preview-label { margin: 0 !important; color: var(--cocoa); font-size: 13px !important; font-weight: 700 !important; }
+    .preview-card { overflow: hidden; border: 1px solid rgba(75,58,50,.1); border-radius: 12px; background: var(--cream); box-shadow: var(--shadow-sm); }
+    .preview-image-wrap { aspect-ratio: 4 / 5; overflow: hidden; background: var(--cream); }
+    .preview-image-wrap img { display: block; width: 100%; height: 100%; object-fit: cover; }
+    .preview-info { display: grid; gap: 6px; padding: 12px; background: var(--white); }
+    .preview-info span { min-height: 24px; color: rgba(75,58,50,.6); font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+    .preview-info strong { font: 700 16px var(--font-playfair), Georgia, serif; }
+    .preview-info b { font: 700 16px var(--font-playfair), Georgia, serif; }
     .prompt-box { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 14px; background: var(--sage-light); border-left: 3px solid var(--sage); }
     .prompt-box strong { font-size: 13px; }
     .prompt-box p { margin: 5px 0 0; font-size: 12px; font-weight: 400; line-height: 1.5; }
     .prompt-box .secondary-button { flex: 0 0 auto; padding: 9px 11px; }
-    @media (max-width: 640px) { .admin-page { padding: 24px 16px; } .admin-section, .admin-login { padding: 24px; } .product-form { grid-template-columns: 1fr; } .product-form .wide, .product-form button { grid-column: auto; } .admin-header, .section-heading, .order-card-header { align-items: flex-start; flex-direction: column; } .product-row { align-items: flex-start; } .order-card-header select { width: 100%; } }
+    @media (max-width: 640px) { .admin-page { padding: 24px 16px; } .admin-section, .admin-login { padding: 24px; } .category-form, .product-form { grid-template-columns: 1fr; } .product-form .wide, .product-form button { grid-column: auto; } .admin-header, .section-heading, .order-card-header { align-items: flex-start; flex-direction: column; } .admin-header-actions { width: 100%; align-items: stretch; flex-direction: column; } .admin-orders-tab { width: 100%; } .product-row { align-items: flex-start; } .order-card-header select { width: 100%; } }
   `}</style>;
 }

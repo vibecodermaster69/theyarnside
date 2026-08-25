@@ -12,7 +12,7 @@ export default function MakerStory() {
           <div className="story-image-wrapper zoom-container">
             <Image
               src="/assets/02_website_assets/category_banners/kits_and_bundles.png"
-              alt="Artisan yarn basket with crochet hooks"
+              alt="Handmade crochet pieces and yarn"
               width={500}
               height={500}
               className="story-image zoom-image"
@@ -82,7 +82,7 @@ export default function MakerStory() {
           border-radius: var(--border-radius-md);
           overflow: hidden;
           box-shadow: var(--shadow-md);
-          border: 6px solid var(--white);
+          border: 5px solid var(--white);
         }
 
         .story-image {

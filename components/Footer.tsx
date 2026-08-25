@@ -7,21 +7,6 @@ import { Mail } from "lucide-react";
 import Newsletter from "./Newsletter";
 
 export default function Footer() {
-  // Custom Pinterest SVG Icon
-  const PinterestIcon = ({ size = 18 }: { size?: number }) => (
-    <svg
-      role="img"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      width={size}
-      height={size}
-      style={{ display: "inline-block", verticalAlign: "middle" }}
-    >
-      <title>Pinterest</title>
-      <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.162-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.966 1.406-5.966s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.024 0 1.518.769 1.518 1.688 0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.168 1.777 2.168 2.127 0 3.765-2.244 3.765-5.479 0-2.861-2.06-4.859-4.991-4.859-3.399 0-5.395 2.543-5.395 5.174 0 1.024.395 2.124.89 2.73.098.119.112.224.083.345l-.333 1.36c-.053.22-.172.269-.399.165-1.495-.699-2.43-2.899-2.43-4.664 0-3.794 2.757-7.279 7.942-7.279 4.168 0 7.407 2.97 7.407 6.939 0 4.141-2.61 7.47-6.233 7.47-1.217 0-2.36-.632-2.75-1.378l-.752 2.871c-.272 1.045-1.01 2.355-1.503 3.159 1.124.347 2.317.535 3.554.535 6.607 0 11.985-5.36 11.985-11.987C23.97 5.39 18.592.02 12.017.02z" />
-    </svg>
-  );
-
   // Custom Instagram SVG Icon
   const InstagramIcon = ({ size = 18 }: { size?: number }) => (
     <svg
@@ -38,23 +23,6 @@ export default function Footer() {
       <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
       <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
       <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-    </svg>
-  );
-
-  // Custom Facebook SVG Icon
-  const FacebookIcon = ({ size = 18 }: { size?: number }) => (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      width={size}
-      height={size}
-      style={{ display: "inline-block", verticalAlign: "middle" }}
-    >
-      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
     </svg>
   );
 
@@ -87,11 +55,11 @@ export default function Footer() {
           <div className="footer-col links-col">
             <h3 className="footer-title text-serif">Shop</h3>
             <ul className="footer-links">
-              <li><Link href="#shop" className="footer-link">All Products</Link></li>
-              <li><Link href="#shop?category=accessories-gifts" className="footer-link">Accessories & Gifts</Link></li>
-              <li><Link href="#shop?category=amigurumi" className="footer-link">Amigurumi</Link></li>
-              <li><Link href="#shop?category=wearables" className="footer-link">Wearables</Link></li>
-              <li><Link href="#shop?category=home-decor" className="footer-link">Home Decor</Link></li>
+              <li><Link href="/shop" className="footer-link">All Products</Link></li>
+              <li><Link href="/shop?category=accessories-gifts" className="footer-link">Accessories & Gifts</Link></li>
+              <li><Link href="/shop?category=amigurumi" className="footer-link">Amigurumi</Link></li>
+              <li><Link href="/shop?category=wearables" className="footer-link">Wearables</Link></li>
+              <li><Link href="/shop?category=home-decor" className="footer-link">Home Decor</Link></li>
             </ul>
           </div>
 
@@ -128,24 +96,6 @@ export default function Footer() {
               aria-label="Instagram"
             >
               <InstagramIcon size={18} />
-            </a>
-            <a
-              href="https://pinterest.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="footer-social-link touch-target"
-              aria-label="Pinterest"
-            >
-              <PinterestIcon size={18} />
-            </a>
-            <a
-              href="https://facebook.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="footer-social-link touch-target"
-              aria-label="Facebook"
-            >
-              <FacebookIcon size={18} />
             </a>
             <a
               href="mailto:cozy@theyarnside.com"

@@ -24,7 +24,7 @@ const InstagramIcon = ({ size = 18, className }: { size?: number; className?: st
 );
 
 export default function InstagramGrid() {
-  const posts = [
+  const fallbackPosts = [
     {
       image: "/assets/03_instagram_kit/ig_feed_post.png",
       link: "https://www.instagram.com/theyarnside.co/",
@@ -56,7 +56,21 @@ export default function InstagramGrid() {
       alt: "Colorful natural cotton yarn balls",
     },
   ];
-  const [postLinks, setPostLinks] = useState(posts.map((post) => post.link));
+  const [postLinks, setPostLinks] = useState<string[]>([]);
+
+  function getInstagramEmbed(link: string) {
+    try {
+      const url = new URL(link);
+      const match = url.pathname.match(/^\/(p|reel|tv)\/([^/]+)/);
+      if (!match || url.hostname !== "www.instagram.com" && url.hostname !== "instagram.com") return null;
+      return {
+        url: `https://www.instagram.com/${match[1]}/${match[2]}/embed`,
+        type: match[1] === "reel" ? "Reel" : match[1] === "tv" ? "Video" : "Post",
+      };
+    } catch {
+      return null;
+    }
+  }
 
   useEffect(() => {
     let client;
@@ -89,9 +103,37 @@ export default function InstagramGrid() {
         </div>
 
         <div className="instagram-grid">
-          {posts.map((post, index) => (
+          {postLinks.length > 0 ? postLinks.map((link, index) => {
+            const embed = getInstagramEmbed(link);
+            if (!embed) {
+              return (
+                <a
+                  href={link}
+                  key={`${link}-${index}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="instagram-item instagram-link-card"
+                  aria-label="Open Instagram link"
+                >
+                  <InstagramIcon size={28} />
+                  <span className="text-sans">Open on Instagram</span>
+                </a>
+              );
+            }
+
+            return (
+              <div className="instagram-item instagram-embed-card" key={`${link}-${index}`}>
+                <iframe
+                  src={embed.url}
+                  title={`Instagram ${embed.type}`}
+                  loading="lazy"
+                  allow="fullscreen"
+                />
+              </div>
+            );
+          }) : fallbackPosts.map((post, index) => (
             <a
-              href={postLinks[index] || post.link}
+              href={post.link}
               key={index}
               target="_blank"
               rel="noopener noreferrer"
@@ -132,19 +174,44 @@ export default function InstagramGrid() {
 
         .instagram-grid {
           display: grid;
-          grid-template-columns: repeat(6, 1fr);
+          grid-template-columns: repeat(3, 1fr);
           gap: 16px;
         }
 
         .instagram-item {
           display: block;
           position: relative;
-          aspect-ratio: 1 / 1;
+          aspect-ratio: 4 / 5;
           border-radius: var(--border-radius-md);
           overflow: hidden;
           box-shadow: var(--shadow-sm);
           border: 1px solid rgba(75, 58, 50, 0.03);
           background-color: var(--cream);
+        }
+
+        .instagram-embed-card {
+          background-color: var(--white);
+        }
+
+        .instagram-embed-card iframe {
+          display: block;
+          width: 100%;
+          height: 100%;
+          border: 0;
+        }
+
+        .instagram-link-card {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          color: var(--cocoa);
+          text-align: center;
+        }
+
+        .instagram-link-card:hover {
+          color: var(--coral);
         }
 
         .instagram-image {

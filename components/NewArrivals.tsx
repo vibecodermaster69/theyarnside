@@ -98,7 +98,7 @@ export default function NewArrivals() {
     },
   ];
 
-  const [products, setProducts] = useState<Product[]>(fallbackProducts);
+  const [products, setProducts] = useState<Product[]>(fallbackProducts.filter((product) => product.isNew));
   const [wishlist, setWishlist] = useState<number[]>([]);
   const [requestProduct, setRequestProduct] = useState<Product | null>(null);
   const { addItem } = useCart();
@@ -115,6 +115,7 @@ export default function NewArrivals() {
       .from("products")
       .select("id, name, category, price_inr, image_url, is_new, stock_quantity")
       .eq("is_active", true)
+      .eq("is_new", true)
       .order("created_at", { ascending: false })
       .then(({ data, error }) => {
         if (error || !data?.length) return;
@@ -205,7 +206,7 @@ export default function NewArrivals() {
         </div>
 
         <div className="view-all-container">
-          <a href="#shop" className="btn btn-primary">
+          <a href="/shop" className="btn btn-primary">
             View All Products
           </a>
         </div>

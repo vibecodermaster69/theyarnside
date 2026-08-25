@@ -1,0 +1,182 @@
+"use client";
+
+import { Suspense, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Heart, ShoppingBag } from "lucide-react";
+import { createSupabaseBrowserClient } from "@/lib/supabase";
+import { CartProvider, useCart } from "@/components/CartProvider";
+import RequestOrderModal from "@/components/RequestOrderModal";
+
+type Product = {
+  id: number;
+  name: string;
+  category: string;
+  priceInr: number;
+  image: string;
+  isNew: boolean;
+  stockQuantity: number;
+};
+
+const fallbackProducts: Product[] = [
+  ["Daisy Market Tote", "Handmade • Crochet Bag", 5200, "daisy_market_tote.png"],
+  ["Blush Bunny", "Handmade • Amigurumi", 2850, "blush_bunny.png"],
+  ["Vintage Square Blanket", "Handmade • Crochet Blanket", 8200, "vintage_square_blanket.png"],
+  ["The Cozy Beanie", "Handmade • Wearable", 3200, "the_cozy_beanie.png"],
+  ["Paranda", "Hair & Fashion Accessories", 250, "paranda.png"],
+  ["Evil Eye", "Keychains & Charms", 250, "evil_eye.png"],
+  ["3 Musketeers Mushroom", "Keychains & Charms", 250, "three_musketeers_mushroom.png"],
+  ["Red Cherry", "Keychains & Charms", 250, "red_cherry.png"],
+].map(([name, category, priceInr, image], index) => ({
+  id: index + 1,
+  name: name as string,
+  category: category as string,
+  priceInr: priceInr as number,
+  image: `/assets/02_website_assets/product_images/${image}`,
+  isNew: index < 4,
+  stockQuantity: index < 4 ? 0 : 5,
+}));
+
+const categoryLabels: Record<string, string> = {
+  amigurumi: "Amigurumi",
+  wearables: "Wearables",
+  "home-decor": "Home Decor",
+  "accessories-gifts": "Accessories & Gifts",
+  "hair-fashion-accessories": "Hair & Fashion Accessories",
+  "keychains-charms": "Keychains & Charms",
+};
+
+function getCategoryKey(category: string) {
+  const normalized = category.toLowerCase().replace(/handmade\s*•\s*/, "");
+  if (normalized.includes("amigurumi")) return "amigurumi";
+  if (normalized.includes("wearable")) return "wearables";
+  if (normalized.includes("blanket") || normalized.includes("home")) return "home-decor";
+  if (normalized.includes("accessor") || normalized.includes("bag")) return "accessories-gifts";
+  if (normalized.includes("keychain") || normalized.includes("charm")) return "keychains-charms";
+  return normalized.replace(/\s+/g, "-");
+}
+
+export default function ShopPage() {
+  return <CartProvider><Suspense fallback={<main className="shop-page" />}><ShopCatalogue /></Suspense></CartProvider>;
+}
+
+function ShopCatalogue() {
+  const [products, setProducts] = useState<Product[]>(fallbackProducts);
+  const [category, setCategory] = useState("all");
+  const [sort, setSort] = useState("newest");
+  const [wishlist, setWishlist] = useState<number[]>([]);
+  const [requestProduct, setRequestProduct] = useState<Product | null>(null);
+  const { addItem } = useCart();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const initialCategory = searchParams.get("category");
+    if (initialCategory) setCategory(initialCategory);
+  }, [searchParams]);
+
+  useEffect(() => {
+    let client;
+    try {
+      client = createSupabaseBrowserClient();
+    } catch {
+      return;
+    }
+
+    client
+      .from("products")
+      .select("id, name, category, price_inr, image_url, is_new, stock_quantity, created_at")
+      .eq("is_active", true)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (!data?.length) return;
+        setProducts(data.map((product) => ({
+          id: product.id,
+          name: product.name,
+          category: product.category,
+          priceInr: product.price_inr,
+          image: product.image_url || fallbackProducts[0].image,
+          isNew: product.is_new,
+          stockQuantity: product.stock_quantity,
+        })));
+      });
+  }, []);
+
+  const categories = useMemo(() => Array.from(new Set(products.map((product) => getCategoryKey(product.category)))), [products]);
+  const visibleProducts = useMemo(() => {
+    const filtered = category === "all" ? products : products.filter((product) => getCategoryKey(product.category) === category);
+    return [...filtered].sort((first, second) => {
+      if (sort === "price-low") return first.priceInr - second.priceInr;
+      if (sort === "price-high") return second.priceInr - first.priceInr;
+      return Number(second.isNew) - Number(first.isNew);
+    });
+  }, [category, products, sort]);
+
+  const toggleWishlist = (id: number) => {
+    setWishlist((current) => current.includes(id) ? current.filter((productId) => productId !== id) : [...current, id]);
+  };
+
+  return (
+    <main className="shop-page">
+      <header className="shop-header">
+        <div className="container shop-header-inner">
+          <Link href="/" className="shop-back">← Back home</Link>
+          <h1 className="text-serif">All Handmade Pieces</h1>
+          <p>Browse every crochet creation, made one loop at a time.</p>
+        </div>
+      </header>
+
+      <section className="section-padding catalogue-section">
+        <div className="container">
+          <div className="catalogue-toolbar">
+            <label>Category<select value={category} onChange={(event) => setCategory(event.target.value)}><option value="all">All categories</option>{categories.map((item) => <option key={item} value={item}>{categoryLabels[item] || item.replaceAll("-", " ")}</option>)}</select></label>
+            <label>Sort by<select value={sort} onChange={(event) => setSort(event.target.value)}><option value="newest">Newest first</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option></select></label>
+            <span className="result-count">{visibleProducts.length} {visibleProducts.length === 1 ? "piece" : "pieces"}</span>
+          </div>
+
+          {!visibleProducts.length ? <p className="empty-catalogue">No products match this category yet.</p> : <div className="catalogue-grid">
+            {visibleProducts.map((product) => <article className="catalogue-card" key={product.id}>
+              <div className="catalogue-image-wrap">
+                {product.isNew && <span className="badge badge-new catalogue-badge">New</span>}
+                <button className={`wishlist-button touch-target ${wishlist.includes(product.id) ? "active" : ""}`} onClick={() => toggleWishlist(product.id)} aria-label={`Add ${product.name} to wishlist`}><Heart size={18} fill={wishlist.includes(product.id) ? "var(--coral)" : "transparent"} color={wishlist.includes(product.id) ? "var(--coral)" : "var(--cocoa)"} /></button>
+                <Image src={product.image} alt={product.name} width={600} height={750} unoptimized={product.image.startsWith("http")} />
+              </div>
+              <div className="catalogue-info"><span className="catalogue-category">{categoryLabels[getCategoryKey(product.category)] || product.category}</span><h2 className="text-serif">{product.name}</h2><div className="catalogue-footer"><strong>₹{product.priceInr.toLocaleString("en-IN")}</strong>{product.stockQuantity > 0 ? <button className="catalogue-action" onClick={() => addItem({ id: product.id, name: product.name, priceInr: product.priceInr, image: product.image, stockQuantity: product.stockQuantity })}><ShoppingBag size={15} /> Add</button> : <button className="catalogue-action request" onClick={() => setRequestProduct(product)}>Request order</button>}</div></div>
+            </article>)}
+          </div>}
+        </div>
+      </section>
+      {requestProduct && <RequestOrderModal product={{ id: requestProduct.id, name: requestProduct.name, priceInr: requestProduct.priceInr }} onClose={() => setRequestProduct(null)} />}
+      <style jsx>{`
+        .shop-page { min-height: 100vh; background: var(--cream); }
+        .shop-header { padding: 48px 0 42px; border-bottom: 1px solid rgba(75,58,50,.08); }
+        .shop-header-inner { text-align: center; }
+        .shop-back { display: inline-block; margin-bottom: 24px; color: var(--coral); font-size: var(--fs-sm); font-weight: 700; }
+        .shop-header h1 { font-size: var(--fs-3xl); margin-bottom: 8px; }
+        .shop-header p { color: rgba(75,58,50,.72); }
+        .catalogue-section { background: var(--white); }
+        .catalogue-toolbar { display: flex; align-items: end; gap: 16px; margin-bottom: 32px; padding-bottom: 20px; border-bottom: 1px solid rgba(75,58,50,.1); }
+        .catalogue-toolbar label { display: grid; gap: 6px; color: var(--cocoa); font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+        .catalogue-toolbar select { min-width: 190px; padding: 11px 32px 11px 12px; border: 1px solid rgba(75,58,50,.18); border-radius: 4px; background: var(--cream); font: 400 14px var(--font-lato), sans-serif; text-transform: none; letter-spacing: 0; }
+        .result-count { margin-left: auto; color: rgba(75,58,50,.65); font-size: var(--fs-sm); }
+        .catalogue-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+        .catalogue-card { display: flex; flex-direction: column; overflow: hidden; background: var(--cream); border: 1px solid rgba(75,58,50,.08); border-radius: var(--border-radius-md); }
+        .catalogue-image-wrap { position: relative; aspect-ratio: 4 / 5; overflow: hidden; background: var(--cream); }
+        .catalogue-image-wrap > img { width: 100%; height: 100%; object-fit: cover; }
+        .catalogue-badge { position: absolute; top: 14px; left: 14px; z-index: 2; }
+        .wishlist-button { position: absolute; top: 10px; right: 10px; z-index: 2; background: var(--white); border-radius: 50%; box-shadow: var(--shadow-sm); }
+        .wishlist-button.active { color: var(--coral); }
+        .catalogue-info { display: flex; flex: 1; flex-direction: column; padding: 16px; background: var(--white); }
+        .catalogue-category { min-height: 32px; color: rgba(75,58,50,.6); font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+        .catalogue-info h2 { margin: 8px 0 18px; font-size: var(--fs-md); line-height: 1.3; }
+        .catalogue-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: auto; padding-top: 12px; border-top: 1px solid rgba(75,58,50,.08); }
+        .catalogue-footer strong { font: 700 var(--fs-md) var(--font-playfair), Georgia, serif; }
+        .catalogue-action { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 38px; padding: 8px 10px; border-radius: 4px; background: var(--coral); color: var(--white); font-size: 11px; font-weight: 700; }
+        .catalogue-action.request { background: transparent; border: 1px solid var(--cocoa); color: var(--cocoa); }
+        .empty-catalogue { padding: 60px 0; text-align: center; }
+        @media (max-width: 991px) { .catalogue-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 640px) { .shop-header { padding: 32px 0; } .shop-header h1 { font-size: var(--fs-2xl); } .catalogue-toolbar { align-items: stretch; flex-direction: column; } .catalogue-toolbar select { width: 100%; } .result-count { margin: 0; } .catalogue-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } .catalogue-info { padding: 12px; } .catalogue-category { min-height: 42px; font-size: 9px; } .catalogue-footer { align-items: stretch; flex-direction: column; } .catalogue-action { width: 100%; } }
+      `}</style>
+    </main>
+  );
+}

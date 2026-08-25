@@ -8,22 +8,22 @@ export default function ShopByCategory() {
     {
       title: "Amigurumi",
       image: "/assets/02_website_assets/category_banners/amigurumi.png",
-      link: "#shop?category=amigurumi",
+      link: "/shop?category=amigurumi",
     },
     {
       title: "Wearables",
       image: "/assets/02_website_assets/category_banners/wearables.png",
-      link: "#shop?category=wearables",
+      link: "/shop?category=wearables",
     },
     {
       title: "Home Decor",
       image: "/assets/02_website_assets/category_banners/home_decor.png",
-      link: "#shop?category=home-decor",
+      link: "/shop?category=home-decor",
     },
     {
       title: "Accessories & Gifts",
       image: "/assets/02_website_assets/category_banners/accessories_gifts.png",
-      link: "#shop?category=accessories-gifts",
+      link: "/shop?category=accessories-gifts",
     },
   ];
 

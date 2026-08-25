@@ -19,7 +19,7 @@ export default function Newsletter() {
     <div className="newsletter-container">
       <h3 className="newsletter-title text-serif">Join Our Community</h3>
       <p className="newsletter-desc text-sans">
-        Be the first to know about new arrivals, patterns & cozy things.
+        Be the first to know about new arrivals, handmade crochet pieces & cozy things.
       </p>
 
       {isSubscribed ? (

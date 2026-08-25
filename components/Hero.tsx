@@ -28,11 +28,11 @@ export default function Hero() {
           </p>
 
           <div className="hero-actions">
-            <a href="#shop" className="btn btn-primary hero-btn">
+            <a href="/shop" className="btn btn-primary hero-btn">
               Shop Handmade
             </a>
-            <a href="#kits" className="btn btn-secondary hero-btn">
-              Explore Kits
+            <a href="#categories" className="btn btn-secondary hero-btn">
+              Browse Categories
             </a>
           </div>
         </div>

@@ -9,21 +9,14 @@ import { useCart } from "@/components/CartProvider";
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { itemCount, openCart } = useCart();
-
-  // Custom Pinterest SVG Icon since Lucide doesn't include it by default
-  const PinterestIcon = ({ size = 18 }: { size?: number }) => (
-    <svg
-      role="img"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      width={size}
-      height={size}
-      style={{ display: "inline-block", verticalAlign: "middle" }}
-    >
-      <title>Pinterest</title>
-      <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.162-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.966 1.406-5.966s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.024 0 1.518.769 1.518 1.688 0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.168 1.777 2.168 2.127 0 3.765-2.244 3.765-5.479 0-2.861-2.06-4.859-4.991-4.859-3.399 0-5.395 2.543-5.395 5.174 0 1.024.395 2.124.89 2.73.098.119.112.224.083.345l-.333 1.36c-.053.22-.172.269-.399.165-1.495-.699-2.43-2.899-2.43-4.664 0-3.794 2.757-7.279 7.942-7.279 4.168 0 7.407 2.97 7.407 6.939 0 4.141-2.61 7.47-6.233 7.47-1.217 0-2.36-.632-2.75-1.378l-.752 2.871c-.272 1.045-1.01 2.355-1.503 3.159 1.124.347 2.317.535 3.554.535 6.607 0 11.985-5.36 11.985-11.987C23.97 5.39 18.592.02 12.017.02z" />
-    </svg>
-  );
+  const shopCategories = [
+    { label: "Amigurumi", value: "amigurumi" },
+    { label: "Wearables", value: "wearables" },
+    { label: "Home Decor", value: "home-decor" },
+    { label: "Accessories & Gifts", value: "accessories-gifts" },
+    { label: "Hair & Fashion Accessories", value: "hair-fashion-accessories" },
+    { label: "Keychains & Charms", value: "keychains-charms" },
+  ];
 
   // Custom Instagram SVG Icon
   const InstagramIcon = ({ size = 18 }: { size?: number }) => (
@@ -44,23 +37,6 @@ export default function Header() {
     </svg>
   );
 
-  // Custom Facebook SVG Icon
-  const FacebookIcon = ({ size = 18 }: { size?: number }) => (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      width={size}
-      height={size}
-      style={{ display: "inline-block", verticalAlign: "middle" }}
-    >
-      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
-    </svg>
-  );
-
   return (
     <header className="header-container">
       <div className="container header-inner">
@@ -74,24 +50,6 @@ export default function Header() {
             aria-label="Instagram"
           >
             <InstagramIcon size={18} />
-          </a>
-          <a
-            href="https://pinterest.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="social-icon-link touch-target"
-            aria-label="Pinterest"
-          >
-            <PinterestIcon size={18} />
-          </a>
-          <a
-            href="https://facebook.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="social-icon-link touch-target"
-            aria-label="Facebook"
-          >
-            <FacebookIcon size={18} />
           </a>
         </div>
 
@@ -121,9 +79,7 @@ export default function Header() {
         {/* Center-Right: Navigation Links (Desktop only) */}
         <nav className="header-nav">
           <Link href="/" className="nav-link active">Home</Link>
-          <Link href="#shop" className="nav-link">Shop</Link>
-          <Link href="#patterns" className="nav-link">Patterns</Link>
-          <Link href="#kits" className="nav-link">Kits</Link>
+          <Link href="/shop" className="nav-link">Shop</Link>
           <Link href="#about" className="nav-link">About</Link>
           <Link href="#journal" className="nav-link">Journal</Link>
         </nav>
@@ -167,9 +123,19 @@ export default function Header() {
           
           <nav className="drawer-nav">
             <Link href="/" className="drawer-link" onClick={() => setMobileMenuOpen(false)}>Home</Link>
-            <Link href="#shop" className="drawer-link" onClick={() => setMobileMenuOpen(false)}>Shop</Link>
-            <Link href="#patterns" className="drawer-link" onClick={() => setMobileMenuOpen(false)}>Patterns</Link>
-            <Link href="#kits" className="drawer-link" onClick={() => setMobileMenuOpen(false)}>Kits</Link>
+            <Link href="/shop" className="drawer-link" onClick={() => setMobileMenuOpen(false)}>Shop</Link>
+            <div className="drawer-category-list" aria-label="Shop categories">
+              {shopCategories.map((category) => (
+                <Link
+                  key={category.value}
+                  href={`/shop?category=${category.value}`}
+                  className="drawer-category-link"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {category.label}
+                </Link>
+              ))}
+            </div>
             <Link href="#about" className="drawer-link" onClick={() => setMobileMenuOpen(false)}>About</Link>
             <Link href="#journal" className="drawer-link" onClick={() => setMobileMenuOpen(false)}>Journal</Link>
           </nav>
@@ -178,12 +144,6 @@ export default function Header() {
             <div className="drawer-socials">
               <a href="https://www.instagram.com/theyarnside.co/" target="_blank" rel="noopener noreferrer" className="social-icon-link touch-target">
                 <InstagramIcon size={20} />
-              </a>
-              <a href="https://pinterest.com" target="_blank" rel="noopener noreferrer" className="social-icon-link touch-target">
-                <PinterestIcon size={20} />
-              </a>
-              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="social-icon-link touch-target">
-                <FacebookIcon size={20} />
               </a>
             </div>
             <p className="drawer-tagline">May the yarn be with you.</p>
@@ -214,7 +174,8 @@ export default function Header() {
           display: flex;
           align-items: center;
           gap: 12px;
-          width: 25%;
+          flex: 1 1 auto;
+          width: auto;
         }
 
         .social-icon-link {
@@ -238,7 +199,9 @@ export default function Header() {
           display: flex;
           justify-content: center;
           align-items: center;
-          width: 25%;
+          flex: 0 0 240px;
+          width: 240px;
+          margin-right: 28px;
         }
 
         .logo-img {
@@ -251,8 +214,9 @@ export default function Header() {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 28px;
-          width: 35%;
+          flex: 1 1 auto;
+          width: auto;
+          gap: 22px;
         }
 
         .nav-link {
@@ -292,7 +256,8 @@ export default function Header() {
           align-items: center;
           justify-content: flex-end;
           gap: 8px;
-          width: 15%;
+          flex: 0 0 auto;
+          width: auto;
         }
 
         .util-button {
@@ -371,6 +336,7 @@ export default function Header() {
           display: flex;
           flex-direction: column;
           padding: 24px;
+          overflow-y: auto;
           transition: left var(--transition-normal);
         }
 
@@ -390,6 +356,27 @@ export default function Header() {
           flex-direction: column;
           gap: 20px;
           flex-grow: 1;
+        }
+
+        .drawer-category-list {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          margin: -12px 0 0 16px;
+          padding-left: 16px;
+          border-left: 1px solid rgba(75, 58, 50, 0.12);
+        }
+
+        .drawer-category-link {
+          color: var(--cocoa);
+          font-size: var(--fs-sm);
+          opacity: 0.78;
+          padding: 7px 0;
+        }
+
+        .drawer-category-link:hover {
+          color: var(--coral);
+          opacity: 1;
         }
 
         .drawer-link {
@@ -440,7 +427,6 @@ export default function Header() {
 
           .header-nav {
             gap: 18px;
-            width: 40%;
           }
         }
 
@@ -461,7 +447,9 @@ export default function Header() {
           }
 
           .header-logo {
+            flex: 0 0 auto;
             width: 60%;
+            margin-right: 0;
             justify-content: center;
           }
 
@@ -470,6 +458,7 @@ export default function Header() {
           }
 
           .header-utils {
+            flex: 0 0 auto;
             width: 20%;
           }
         }
