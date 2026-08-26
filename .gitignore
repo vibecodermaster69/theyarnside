@@ -28,6 +28,8 @@ yarn-error.log*
 # local env files
 .env
 .env*.local
+ty-storage-sa.json
+ty-storage-sa-new.json
 
 # vercel
 .vercel
@@ -37,3 +39,6 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+# google cloud credentials
+ty-storage-sa.json
