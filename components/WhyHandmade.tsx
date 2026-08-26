@@ -28,7 +28,7 @@ export default function WhyHandmade() {
   ];
 
   return (
-    <section className="section-padding why-section">
+    <section id="sustainability" className="section-padding why-section">
       <div className="container">
         <h2 className="section-title text-serif">Why Handmade?</h2>
         <div className="section-subtitle tagline">

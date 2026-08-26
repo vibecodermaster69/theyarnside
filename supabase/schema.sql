@@ -55,6 +55,8 @@ create table public.order_requests (
   budget_inr integer not null check (budget_inr >= 0),
   timeframe text not null check (timeframe in ('2_weeks', '3_weeks', '4_weeks', '5_weeks', 'take_your_time')),
   notes text,
+  policy_version text,
+  policy_accepted_at timestamptz,
   status text not null default 'new' check (status in ('new', 'contacted', 'accepted', 'declined', 'completed')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -180,6 +182,8 @@ create or replace function public.create_order(
   p_customer_phone text,
   p_delivery_address text,
   p_notes text,
+  p_policy_version text,
+  p_policy_accepted_at timestamptz,
   p_items jsonb
 )
 returns bigint
@@ -194,12 +198,15 @@ declare
   v_quantity integer;
   v_total integer := 0;
 begin
+  if nullif(trim(p_policy_version), '') is null or p_policy_accepted_at is null then
+    raise exception 'Returns, Refunds & Order Policy must be accepted';
+  end if;
   if p_items is null or jsonb_array_length(p_items) = 0 then
     raise exception 'Cart cannot be empty';
   end if;
 
-  insert into public.orders (customer_name, customer_email, customer_phone, delivery_address, notes, total_inr)
-  values (trim(p_customer_name), nullif(trim(p_customer_email), ''), trim(p_customer_phone), trim(p_delivery_address), nullif(trim(p_notes), ''), 0)
+  insert into public.orders (customer_name, customer_email, customer_phone, delivery_address, notes, policy_version, policy_accepted_at, total_inr)
+  values (trim(p_customer_name), nullif(trim(p_customer_email), ''), trim(p_customer_phone), trim(p_delivery_address), nullif(trim(p_notes), ''), trim(p_policy_version), p_policy_accepted_at, 0)
   returning id into v_order_id;
 
   for v_item in select * from jsonb_array_elements(p_items)
@@ -237,7 +244,7 @@ begin
 end;
 $$;
 
-grant execute on function public.create_order(text, text, text, text, text, jsonb) to anon, authenticated;
+grant execute on function public.create_order(text, text, text, text, text, text, timestamptz, jsonb) to anon, authenticated;
 
 create or replace function public.cancel_order(p_order_id bigint)
 returns public.orders

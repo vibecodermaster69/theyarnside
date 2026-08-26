@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Yarn Side · Cart Bag Demo</title>
+  <style>
+    :root { --cream:#f7f1e8; --white:#fffdf9; --cocoa:#4b3a32; --coral:#df7868; --sage:#91a696; --sage-light:#edf2ed; --line:rgba(75,58,50,.13); --shadow:0 18px 45px rgba(75,58,50,.14); }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; background:var(--cream); color:var(--cocoa); font:15px/1.5 Arial,sans-serif; }
+    .page { max-width:1120px; margin:0 auto; padding:42px 24px 120px; }
+    .eyebrow { margin:0 0 8px; color:var(--coral); font-size:11px; font-weight:800; letter-spacing:.16em; text-transform:uppercase; }
+    h1,h2,h3 { font-family:Georgia,serif; font-weight:500; }
+    h1 { margin:0; font-size:clamp(34px,5vw,58px); line-height:1.05; }
+    .intro { max-width:600px; margin:14px 0 36px; color:rgba(75,58,50,.7); }
+    .products { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+    .product { overflow:hidden; background:var(--white); border:1px solid var(--line); border-radius:16px; box-shadow:0 5px 18px rgba(75,58,50,.05); }
+    .product-art { display:grid; place-items:center; aspect-ratio:4/3; background:var(--sage-light); font-size:70px; }
+    .product-info { padding:18px; }
+    .product-info small { display:block; color:rgba(75,58,50,.6); font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+    .product-info h2 { margin:6px 0 16px; font-size:23px; }
+    .product-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .price { font-family:Georgia,serif; font-size:20px; font-weight:700; }
+    button { border:0; cursor:pointer; font:inherit; }
+    .add { display:inline-flex; align-items:center; gap:7px; padding:11px 15px; border-radius:999px; background:var(--sage); color:white; font-weight:700; }
+    .add:hover { background:var(--cocoa); }
+    .bag { position:fixed; right:28px; bottom:28px; z-index:5; display:none; align-items:center; gap:10px; min-width:172px; padding:10px 13px 10px 10px; border:1px solid rgba(75,58,50,.14); border-radius:18px; background:var(--white); color:var(--cocoa); box-shadow:var(--shadow); text-align:left; }
+    .bag.visible { display:flex; animation:bagAppear .35s ease both; }
+    .bag-icon { position:relative; display:grid; place-items:center; width:52px; height:58px; color:var(--cocoa); }
+    .bag-icon svg { display:block; width:52px; height:58px; }
+    .bag-monogram { position:absolute; left:13px; top:27px; display:grid; place-items:center; width:28px; height:19px; }
+    .bag-monogram img { display:block; width:28px; height:19px; object-fit:contain; }
+    .badge { position:absolute; top:-7px; right:-7px; display:grid; place-items:center; min-width:22px; height:22px; padding:0 5px; border:2px solid var(--white); border-radius:999px; background:var(--cocoa); color:white; font-size:11px; font-weight:800; }
+    .bag-copy { display:grid; gap:1px; flex:1; }
+    .bag-copy strong { font-family:Georgia,serif; font-size:17px; }
+    .bag-copy small { color:rgba(75,58,50,.65); font-size:11px; }
+    .bag.bump { animation:bump .55s ease; }
+    @keyframes bump { 0%,100%{transform:translateY(0) rotate(0)} 25%{transform:translateY(-9px) rotate(-4deg)} 55%{transform:translateY(2px) rotate(3deg)} 75%{transform:translateY(-3px) rotate(-1deg)} }
+    @keyframes bagAppear { from { opacity:0; transform:translateY(15px) scale(.92); } to { opacity:1; transform:translateY(0) scale(1); } }
+    .toast { position:fixed; right:28px; bottom:104px; z-index:6; display:flex; align-items:center; gap:12px; max-width:310px; padding:14px 16px; border:1px solid var(--line); border-radius:12px; background:var(--white); box-shadow:var(--shadow); opacity:0; transform:translateY(12px); pointer-events:none; transition:.25s ease; }
+    .toast.show { opacity:1; transform:translateY(0); }
+    .toast-check { display:grid; place-items:center; width:25px; height:25px; border-radius:50%; background:var(--sage); color:white; font-weight:800; }
+    .drawer-backdrop { position:fixed; inset:0; z-index:8; background:rgba(75,58,50,.35); opacity:0; pointer-events:none; transition:.25s ease; }
+    .drawer { position:fixed; top:0; right:0; z-index:9; display:flex; flex-direction:column; width:min(420px,100%); height:100%; padding:28px; background:var(--cream); box-shadow:-14px 0 40px rgba(75,58,50,.16); transform:translateX(100%); transition:.3s ease; }
+    .drawer.open,.drawer-backdrop.open { transform:translateX(0); opacity:1; pointer-events:auto; }
+    .drawer-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
+    .drawer-brand { display:flex; align-items:center; gap:12px; }
+    .drawer-seal { width:54px; height:54px; object-fit:contain; border-radius:50%; }
+    .drawer-header h2 { margin:0; font-size:30px; }
+    .close { width:36px; height:36px; border:1px solid var(--line); border-radius:50%; background:var(--white); color:var(--cocoa); font-size:20px; }
+    .drawer-items { display:grid; gap:12px; margin:28px 0; overflow:auto; }
+    .drawer-item { display:flex; align-items:center; gap:12px; padding:12px; border:1px solid var(--line); border-radius:12px; background:var(--white); }
+    .drawer-item-art { display:grid; place-items:center; width:54px; height:54px; border-radius:9px; background:var(--sage-light); font-size:28px; }
+    .drawer-item-copy { flex:1; }
+    .drawer-item-copy strong,.drawer-item-copy small { display:block; }
+    .drawer-item-copy small { color:rgba(75,58,50,.65); }
+    .drawer-total { display:flex; justify-content:space-between; margin-top:auto; padding-top:18px; border-top:1px solid var(--line); font-family:Georgia,serif; font-size:22px; }
+    .drawer-cta { width:100%; margin-top:16px; padding:14px; border-radius:999px; background:var(--coral); color:white; font-weight:700; }
+    @media(max-width:700px) { .page { padding:28px 16px 105px; } .products { grid-template-columns:1fr 1fr; gap:12px; } .product-art { font-size:52px; } .product-info { padding:13px; } .product-info h2 { font-size:18px; } .product-footer { align-items:stretch; flex-direction:column; } .add { justify-content:center; } .bag { right:14px; bottom:14px; min-width:158px; } .toast { right:14px; bottom:84px; } }
+    @media(max-width:390px) { .products { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <p class="eyebrow">THE YARN SIDE · INTERACTION SAMPLE</p>
+    <h1>Keep browsing,<br />your bag keeps up.</h1>
+    <p class="intro">This is a standalone preview of the proposed shopping-bag interaction. Add products without leaving the catalogue, watch the bag update, then open the drawer whenever you are ready.</p>
+    <section class="products" aria-label="Sample products">
+      <article class="product"><div class="product-art">🧶</div><div class="product-info"><small>Handmade · Wearables</small><h2>The Cozy Beanie</h2><div class="product-footer"><span class="price">₹3,200</span><button class="add" data-name="The Cozy Beanie" data-price="3200" data-art="🧶">＋ Add</button></div></div></article>
+      <article class="product"><div class="product-art">🐰</div><div class="product-info"><small>Handmade · Amigurumi</small><h2>Blush Bunny</h2><div class="product-footer"><span class="price">₹2,850</span><button class="add" data-name="Blush Bunny" data-price="2850" data-art="🐰">＋ Add</button></div></div></article>
+      <article class="product"><div class="product-art">🍒</div><div class="product-info"><small>Keychains & Charms</small><h2>Red Cherry</h2><div class="product-footer"><span class="price">₹250</span><button class="add" data-name="Red Cherry" data-price="250" data-art="🍒">＋ Add</button></div></div></article>
+    </section>
+  </main>
+
+  <button class="bag" id="bagButton" aria-label="Open shopping bag"><span class="bag-icon"><svg viewBox="0 0 64 72" aria-hidden="true"><path d="M11 22h42l5 40-5 5H11l-5-5 5-40Z" fill="#fffdf9" stroke="#4b3a32" stroke-width="3.2" stroke-linejoin="round"/><path d="M18 23c0-14 5-20 14-20s14 6 14 20M18 23c0-11 4-16 9-16s9 5 9 16" fill="none" stroke="#4b3a32" stroke-width="3.2" stroke-linecap="round"/><path d="M53 22l5 40-12-7-5-33Z" fill="#df7868" opacity=".72"/></svg><span class="bag-monogram" aria-hidden="true"><img src="public/assets/logos/ys-monogram-transparent.png" alt="" /></span><span class="badge" id="bagCount">0</span></span><span class="bag-copy"><strong>Your bag</strong><small id="bagSummary">Nothing added yet</small></span><span>›</span></button>
+  <div class="toast" id="toast"><span class="toast-check">✓</span><span id="toastText">Added to your bag</span></div>
+  <div class="drawer-backdrop" id="backdrop"></div>
+  <aside class="drawer" id="drawer" aria-label="Shopping bag"><div class="drawer-header"><div class="drawer-brand"><img class="drawer-seal" src="public/assets/logos/footer_seal_transparent.png" alt="The Yarn Side logo" /><div><p class="eyebrow">THE YARN SIDE</p><h2>Your bag</h2></div></div><button class="close" id="closeButton" aria-label="Close shopping bag">×</button></div><div class="drawer-items" id="drawerItems"><p>Your bag is waiting for something cozy.</p></div><div class="drawer-total"><span>Total</span><strong id="drawerTotal">₹0</strong></div><button class="drawer-cta">Continue to checkout</button></aside>
+
+  <script>
+    const cart = [];
+    const money = value => `₹${value.toLocaleString('en-IN')}`;
+    const bag = document.querySelector('#bagButton');
+    const count = document.querySelector('#bagCount');
+    const summary = document.querySelector('#bagSummary');
+    const toast = document.querySelector('#toast');
+    const toastText = document.querySelector('#toastText');
+    const drawer = document.querySelector('#drawer');
+    const backdrop = document.querySelector('#backdrop');
+    const drawerItems = document.querySelector('#drawerItems');
+    const drawerTotal = document.querySelector('#drawerTotal');
+    let toastTimer;
+    function render() {
+      const quantity = cart.reduce((sum, item) => sum + item.quantity, 0);
+      const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      bag.classList.toggle('visible', quantity > 0);
+      count.textContent = quantity;
+      summary.textContent = quantity ? `${quantity} item${quantity === 1 ? '' : 's'} · ${money(total)}` : 'Nothing added yet';
+      drawerTotal.textContent = money(total);
+      drawerItems.innerHTML = cart.length ? cart.map(item => `<div class="drawer-item"><span class="drawer-item-art">${item.art}</span><span class="drawer-item-copy"><strong>${item.name}</strong><small>${item.quantity} × ${money(item.price)}</small></span><b>${money(item.price * item.quantity)}</b></div>`).join('') : '<p>Your bag is waiting for something cozy.</p>';
+    }
+    function showToast(name) { toastText.textContent = `${name} added to your bag`; toast.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 2600); }
+    function openBag() { drawer.classList.add('open'); backdrop.classList.add('open'); }
+    function closeBag() { drawer.classList.remove('open'); backdrop.classList.remove('open'); }
+    document.querySelectorAll('.add').forEach(button => button.addEventListener('click', () => { const data = button.dataset; const existing = cart.find(item => item.name === data.name); if (existing) existing.quantity += 1; else cart.push({ name:data.name, price:Number(data.price), art:data.art, quantity:1 }); render(); bag.classList.remove('bump'); void bag.offsetWidth; bag.classList.add('bump'); showToast(data.name); }));
+    bag.addEventListener('click', openBag); document.querySelector('#closeButton').addEventListener('click', closeBag); backdrop.addEventListener('click', closeBag); render();
+  </script>
+</body>
+</html>

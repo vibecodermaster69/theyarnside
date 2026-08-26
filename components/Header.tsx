@@ -49,7 +49,7 @@ export default function Header() {
             className="social-icon-link touch-target"
             aria-label="Instagram"
           >
-            <InstagramIcon size={18} />
+            <InstagramIcon size={23} />
           </a>
         </div>
 
@@ -80,8 +80,8 @@ export default function Header() {
         <nav className="header-nav">
           <Link href="/" className="nav-link active">Home</Link>
           <Link href="/shop" className="nav-link">Shop</Link>
-          <Link href="#about" className="nav-link">About</Link>
-          <Link href="#journal" className="nav-link">Journal</Link>
+          <Link href="/#about" className="nav-link">About</Link>
+          <Link href="/#journal" className="nav-link">Journal</Link>
         </nav>
 
         {/* Right Side: Utilities (Search, Profile, Cart) */}
@@ -136,8 +136,8 @@ export default function Header() {
                 </Link>
               ))}
             </div>
-            <Link href="#about" className="drawer-link" onClick={() => setMobileMenuOpen(false)}>About</Link>
-            <Link href="#journal" className="drawer-link" onClick={() => setMobileMenuOpen(false)}>Journal</Link>
+            <Link href="/#about" className="drawer-link" onClick={() => setMobileMenuOpen(false)}>About</Link>
+            <Link href="/#journal" className="drawer-link" onClick={() => setMobileMenuOpen(false)}>Journal</Link>
           </nav>
 
           <div className="drawer-footer">
@@ -174,11 +174,16 @@ export default function Header() {
           display: flex;
           align-items: center;
           gap: 12px;
-          flex: 1 1 auto;
-          width: auto;
+          flex: 0 0 56px;
+          width: 56px;
         }
 
         .social-icon-link {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 44px;
+          height: 44px;
           color: var(--cocoa);
           opacity: 0.8;
           transition: var(--transition-fast);

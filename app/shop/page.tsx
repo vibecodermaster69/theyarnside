@@ -8,6 +8,8 @@ import { Heart, ShoppingBag } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
 import { CartProvider, useCart } from "@/components/CartProvider";
 import RequestOrderModal from "@/components/RequestOrderModal";
+import CartDrawer from "@/components/CartDrawer";
+import CartBag from "@/components/CartBag";
 
 type Product = {
   id: number;
@@ -58,7 +60,7 @@ function getCategoryKey(category: string) {
 }
 
 export default function ShopPage() {
-  return <CartProvider><Suspense fallback={<main className="shop-page" />}><ShopCatalogue /></Suspense></CartProvider>;
+  return <CartProvider><Suspense fallback={<main className="shop-page" />}><ShopCatalogue /><CartDrawer /><CartBag /></Suspense></CartProvider>;
 }
 
 function ShopCatalogue() {
@@ -112,6 +114,14 @@ function ShopCatalogue() {
     });
   }, [category, products, sort]);
 
+  useEffect(() => {
+    const resetCategoryFromEmptyState = (event: MouseEvent) => {
+      if ((event.target as HTMLElement).closest(".empty-catalogue a")) setCategory("all");
+    };
+    document.addEventListener("click", resetCategoryFromEmptyState);
+    return () => document.removeEventListener("click", resetCategoryFromEmptyState);
+  }, []);
+
   const toggleWishlist = (id: number) => {
     setWishlist((current) => current.includes(id) ? current.filter((productId) => productId !== id) : [...current, id]);
   };
@@ -126,7 +136,7 @@ function ShopCatalogue() {
         </div>
       </header>
 
-      <section className="section-padding catalogue-section">
+      <section className="section-padding catalogue-section" data-category={category}>
         <div className="container">
           <div className="catalogue-toolbar">
             <label>Category<select value={category} onChange={(event) => setCategory(event.target.value)}><option value="all">All categories</option>{categories.map((item) => <option key={item} value={item}>{categoryLabels[item] || item.replaceAll("-", " ")}</option>)}</select></label>
@@ -134,7 +144,7 @@ function ShopCatalogue() {
             <span className="result-count">{visibleProducts.length} {visibleProducts.length === 1 ? "piece" : "pieces"}</span>
           </div>
 
-          {!visibleProducts.length ? <p className="empty-catalogue">No products match this category yet.</p> : <div className="catalogue-grid">
+          {!visibleProducts.length ? <div className="empty-catalogue"><Image src="/assets/empty-crochet.png" alt="A woman crocheting with soft yarn" width={720} height={480} /><div><p className="empty-eyebrow">A LITTLE MAKING MAGIC</p><h2>Something lovely is crocheting...</h2><p>We’re adding more handmade pieces to this collection. Check back soon or explore the rest of the shop.</p><Link href="/shop" className="btn btn-secondary">Browse all pieces</Link></div></div> : <div className="catalogue-grid">
             {visibleProducts.map((product) => <article className="catalogue-card" key={product.id}>
               <div className="catalogue-image-wrap">
                 {product.isNew && <span className="badge badge-new catalogue-badge">New</span>}
@@ -173,7 +183,15 @@ function ShopCatalogue() {
         .catalogue-footer strong { font: 700 var(--fs-md) var(--font-playfair), Georgia, serif; }
         .catalogue-action { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 38px; padding: 8px 10px; border-radius: 4px; background: var(--coral); color: var(--white); font-size: 11px; font-weight: 700; }
         .catalogue-action.request { background: transparent; border: 1px solid var(--cocoa); color: var(--cocoa); }
-        .empty-catalogue { padding: 60px 0; text-align: center; }
+        .empty-catalogue { display:grid; grid-template-columns:minmax(260px, 420px) minmax(280px, 440px); align-items:center; justify-content:center; gap:42px; padding:34px 20px 70px; text-align:left; }
+        .empty-catalogue img { width:100%; height:auto; border-radius:var(--border-radius-md); }
+        .empty-catalogue h2 { margin:8px 0 12px; font:700 clamp(28px, 4vw, 42px) var(--font-playfair), Georgia, serif; color:var(--cocoa); }
+        .empty-catalogue p:not(.empty-eyebrow) { max-width:390px; margin:0 0 22px; color:var(--text-muted); line-height:1.7; }
+        .empty-eyebrow { margin:0; color:var(--coral); font:700 11px var(--font-lato), sans-serif; letter-spacing:.14em; }
+        .catalogue-section[data-category="all"] .empty-catalogue { display:block; padding:60px 0; text-align:center; }
+        .catalogue-section[data-category="all"] .empty-catalogue img, .catalogue-section[data-category="all"] .empty-catalogue .empty-eyebrow, .catalogue-section[data-category="all"] .empty-catalogue h2, .catalogue-section[data-category="all"] .empty-catalogue p:not(.empty-eyebrow), .catalogue-section[data-category="all"] .empty-catalogue a { display:none; }
+        .catalogue-section[data-category="all"] .empty-catalogue::after { content:"No products are available right now."; color:var(--cocoa); }
+        @media (max-width: 700px) { .empty-catalogue { grid-template-columns:1fr; gap:24px; padding-top:20px; text-align:center; } .empty-catalogue img { max-width:480px; margin:auto; } .empty-catalogue p:not(.empty-eyebrow) { margin-left:auto; margin-right:auto; } }
         @media (max-width: 991px) { .catalogue-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 640px) { .shop-header { padding: 32px 0; } .shop-header h1 { font-size: var(--fs-2xl); } .catalogue-toolbar { align-items: stretch; flex-direction: column; } .catalogue-toolbar select { width: 100%; } .result-count { margin: 0; } .catalogue-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } .catalogue-info { padding: 12px; } .catalogue-category { min-height: 42px; font-size: 9px; } .catalogue-footer { align-items: stretch; flex-direction: column; } .catalogue-action { width: 100%; } }
       `}</style>

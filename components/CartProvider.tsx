@@ -16,6 +16,7 @@ type CartContextValue = {
   items: CartItem[];
   itemCount: number;
   totalInr: number;
+  lastAddedItem: CartProduct | null;
   isOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
@@ -23,6 +24,7 @@ type CartContextValue = {
   updateQuantity: (id: number, quantity: number) => void;
   removeItem: (id: number) => void;
   clearCart: () => void;
+  clearLastAdded: () => void;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -30,6 +32,7 @@ const storageKey = "theyarnside-cart";
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [lastAddedItem, setLastAddedItem] = useState<CartProduct | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
@@ -49,6 +52,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     items,
     itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
     totalInr: items.reduce((sum, item) => sum + item.priceInr * item.quantity, 0),
+    lastAddedItem,
     isOpen,
     openCart: () => setIsOpen(true),
     closeCart: () => setIsOpen(false),
@@ -61,7 +65,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
         return [...current, { ...product, quantity: 1 }];
       });
-      setIsOpen(true);
+      setLastAddedItem(product);
     },
     updateQuantity: (id, quantity) => {
       setItems((current) => quantity <= 0
@@ -70,7 +74,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     },
     removeItem: (id) => setItems((current) => current.filter((item) => item.id !== id)),
     clearCart: () => setItems([]),
-  }), [items, isOpen]);
+    clearLastAdded: () => setLastAddedItem(null),
+  }), [items, isOpen, lastAddedItem]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

@@ -12,6 +12,7 @@ import InstagramGrid from "@/components/InstagramGrid";
 import Reviews from "@/components/Reviews";
 import Footer from "@/components/Footer";
 import CartDrawer from "@/components/CartDrawer";
+import CartBag from "@/components/CartBag";
 import { CartProvider } from "@/components/CartProvider";
 
 export default function Home() {
@@ -55,6 +56,7 @@ export default function Home() {
       {/* 12. Footer (including Newsletter Signup) */}
       <Footer />
       <CartDrawer />
+      <CartBag />
     </CartProvider>
   );
 }

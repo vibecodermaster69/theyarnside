@@ -67,10 +67,11 @@ export default function Footer() {
           <div className="footer-col links-col">
             <h3 className="footer-title text-serif">About</h3>
             <ul className="footer-links">
-              <li><Link href="#about" className="footer-link">Our Story</Link></li>
-              <li><Link href="#sustainability" className="footer-link">Sustainability</Link></li>
-              <li><Link href="#care" className="footer-link">Care Guide</Link></li>
-              <li><Link href="#custom-orders" className="footer-link">Contact</Link></li>
+              <li><Link href="/#about" className="footer-link">Our Story</Link></li>
+              <li><Link href="/#sustainability" className="footer-link">Sustainability</Link></li>
+              <li><Link href="/care-guide" className="footer-link">Care Guide</Link></li>
+              <li><Link href="/policies/returns-refunds" className="footer-link">Returns & Refunds</Link></li>
+              <li><Link href="/#custom-orders" className="footer-link">Contact</Link></li>
             </ul>
           </div>
 
@@ -95,14 +96,14 @@ export default function Footer() {
               className="footer-social-link touch-target"
               aria-label="Instagram"
             >
-              <InstagramIcon size={18} />
+              <InstagramIcon size={23} />
             </a>
             <a
               href="mailto:cozy@theyarnside.com"
               className="footer-social-link touch-target"
               aria-label="Email"
             >
-              <Mail size={18} />
+              <Mail size={22} />
             </a>
           </div>
         </div>
@@ -112,7 +113,7 @@ export default function Footer() {
         .footer-section {
           background-color: var(--sage);
           color: var(--white);
-          padding: 80px 0 40px 0;
+          padding: 52px 0 28px 0;
           border-top: 1px solid rgba(75, 58, 50, 0.08);
         }
 
@@ -120,7 +121,7 @@ export default function Footer() {
           display: grid;
           grid-template-columns: 2fr 1fr 1fr 2fr;
           gap: 40px;
-          margin-bottom: 60px;
+          margin-bottom: 38px;
         }
 
         .footer-col {
@@ -226,6 +227,11 @@ export default function Footer() {
         }
 
         .footer-social-link {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 44px;
+          height: 44px;
           color: var(--white);
           opacity: 0.8;
           transition: var(--transition-fast);
@@ -247,13 +253,13 @@ export default function Footer() {
 
         @media (max-width: 768px) {
           .footer-section {
-            padding: 60px 0 30px 0;
+            padding: 44px 0 24px 0;
           }
 
           .footer-grid {
             grid-template-columns: 1fr;
             gap: 36px;
-            margin-bottom: 40px;
+            margin-bottom: 28px;
           }
 
           .brand-col, .links-col, .newsletter-col {
@@ -273,7 +279,7 @@ export default function Footer() {
           .footer-bottom {
             flex-direction: column-reverse;
             text-align: center;
-            gap: 24px;
+            gap: 14px;
           }
         }
       `}</style>
