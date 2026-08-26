@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Heart, ShoppingBag } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
 import { CartProvider, useCart } from "@/components/CartProvider";
@@ -13,6 +13,7 @@ import CartBag from "@/components/CartBag";
 
 type Product = {
   id: number;
+  slug: string;
   name: string;
   category: string;
   priceInr: number;
@@ -32,6 +33,7 @@ const fallbackProducts: Product[] = [
   ["Red Cherry", "Keychains & Charms", 250, "red_cherry.png"],
 ].map(([name, category, priceInr, image], index) => ({
   id: index + 1,
+  slug: (name as string).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
   name: name as string,
   category: category as string,
   priceInr: priceInr as number,
@@ -71,6 +73,7 @@ function ShopCatalogue() {
   const [requestProduct, setRequestProduct] = useState<Product | null>(null);
   const { addItem } = useCart();
   const searchParams = useSearchParams();
+  const router = useRouter();
 
   useEffect(() => {
     const initialCategory = searchParams.get("category");
@@ -87,13 +90,14 @@ function ShopCatalogue() {
 
     client
       .from("products")
-      .select("id, name, category, price_inr, image_url, is_new, stock_quantity, created_at")
+      .select("id, name, slug, category, price_inr, image_url, is_new, stock_quantity, created_at")
       .eq("is_active", true)
       .order("created_at", { ascending: false })
       .then(({ data }) => {
         if (!data?.length) return;
         setProducts(data.map((product) => ({
           id: product.id,
+          slug: product.slug,
           name: product.name,
           category: product.category,
           priceInr: product.price_inr,
@@ -145,7 +149,7 @@ function ShopCatalogue() {
           </div>
 
           {!visibleProducts.length ? <div className="empty-catalogue"><Image src="/assets/empty-crochet.png" alt="A woman crocheting with soft yarn" width={720} height={480} /><div><p className="empty-eyebrow">A LITTLE MAKING MAGIC</p><h2>Something lovely is crocheting...</h2><p>We’re adding more handmade pieces to this collection. Check back soon or explore the rest of the shop.</p><Link href="/shop" className="btn btn-secondary">Browse all pieces</Link></div></div> : <div className="catalogue-grid">
-            {visibleProducts.map((product) => <article className="catalogue-card" key={product.id}>
+            {visibleProducts.map((product) => <article className="catalogue-card" key={product.id} onClick={(event) => { if ((event.target as HTMLElement).closest("button")) return; router.push(`/shop/${product.slug}`); }}>
               <div className="catalogue-image-wrap">
                 {product.isNew && <span className="badge badge-new catalogue-badge">New</span>}
                 <button className={`wishlist-button touch-target ${wishlist.includes(product.id) ? "active" : ""}`} onClick={() => toggleWishlist(product.id)} aria-label={`Add ${product.name} to wishlist`}><Heart size={18} fill={wishlist.includes(product.id) ? "var(--coral)" : "transparent"} color={wishlist.includes(product.id) ? "var(--coral)" : "var(--cocoa)"} /></button>

@@ -439,3 +439,30 @@ button {
 }
 
 .cart-alert-ok:hover { background: var(--coral-hover); }
+
+/* Product detail recommendations */
+.product-page { position: relative; isolation: isolate; overflow: hidden; background: radial-gradient(circle at 8% 16%, rgba(143,162,147,.16), transparent 25%), radial-gradient(circle at 94% 62%, rgba(224,122,105,.13), transparent 24%), linear-gradient(135deg, #f7f2ea 0%, #fbf8f2 48%, #f3eee5 100%); }
+.product-page::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: .26; background-image: radial-gradient(rgba(75,58,50,.16) .7px, transparent .7px); background-size: 18px 18px; mask-image: linear-gradient(to bottom, transparent, black 18%, black 82%, transparent); }
+.product-page::after { content: ""; position: absolute; top: 210px; left: -110px; z-index: -1; width: 320px; height: 320px; border: 1px solid rgba(143,162,147,.22); border-radius: 48% 52% 60% 40%; transform: rotate(-22deg); pointer-events: none; box-shadow: 22px 18px 0 -1px rgba(224,122,105,.08), 44px 36px 0 -1px rgba(143,162,147,.1); }
+.product-page .recommended { align-self: stretch; }
+.product-page .product-layout { max-width: 1400px; grid-template-columns: minmax(380px, 500px) minmax(380px, 1fr) minmax(350px, 440px); gap: 64px; }
+.product-page .product-image-panel { padding: 16px; border-radius: 22px; box-shadow: 0 16px 34px rgba(75,58,50,.08); }
+.product-page .product-copy { padding-top: 42px; }
+.product-page .recommended { padding-top: 42px; }
+.product-page .recommended h2 { position: relative; display: flex; align-items: center; gap: 14px; border-bottom: 0; text-align: center; white-space: nowrap; }
+.product-page .recommended h2::before, .product-page .recommended h2::after { content: ""; height: 1px; flex: 1; background: rgba(143,162,147,.55); }
+.product-page .recommended h2::after { box-shadow: 10px 7px 0 -0.2px rgba(143,162,147,.7); }
+.product-page .recommended-item { display: grid; grid-template-columns: 144px minmax(0, 1fr); align-items: center; overflow: hidden; border: 1px solid rgba(75,58,50,.12); border-radius: 18px; background: rgba(255,255,255,.86); box-shadow: 0 8px 22px rgba(75,58,50,.06); transition: transform .2s ease, box-shadow .2s ease; }
+.product-page .recommended-item:hover { transform: translateY(-4px); box-shadow: 0 14px 30px rgba(75,58,50,.12); }
+.product-page .recommended-item img { display: block; width: 144px; height: 154px; padding: 10px; object-fit: contain; background: var(--cream); image-rendering: auto; }
+.product-page .recommended-item span { display: grid; gap: 9px; padding: 18px 18px 18px 22px; }
+.product-page .recommended-item strong { font-size: 16px; line-height: 1.25; }
+.product-page .recommended-item small { color: var(--coral); font-weight: 700; }
+.product-page .recommended-item small::after { content: "  ·  View piece →"; color: var(--cocoa); font-weight: 400; }
+@media (max-width: 900px) { .product-page .product-layout { grid-template-columns: minmax(240px, 400px) 1fr; gap: 30px; } .product-page .recommended-item img { width: 96px; height: 104px; } .product-page .recommended-item { grid-template-columns: 96px minmax(0, 1fr); } }
+
+/* Keep the reference layout ahead of component-scoped card styles. */
+.product-page .recommended-item { display: grid !important; grid-template-columns: 144px minmax(0, 1fr) !important; align-items: center !important; }
+.product-page .recommended-item img { width: 144px !important; height: 154px !important; padding: 10px !important; object-fit: contain !important; }
+.product-page .recommended-item span { display: grid !important; gap: 9px !important; padding: 18px 18px 18px 22px !important; }
+@media (max-width: 900px) { .product-page .recommended-item { grid-template-columns: 96px minmax(0, 1fr) !important; } .product-page .recommended-item img { width: 96px !important; height: 104px !important; } }

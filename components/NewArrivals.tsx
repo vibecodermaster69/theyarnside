@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Heart, ShoppingBag } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
 import RequestOrderModal from "@/components/RequestOrderModal";
@@ -9,6 +10,7 @@ import { useCart } from "@/components/CartProvider";
 
 interface Product {
   id: number;
+  slug?: string;
   name: string;
   category: string;
   price: string;
@@ -102,6 +104,7 @@ export default function NewArrivals() {
   const [wishlist, setWishlist] = useState<number[]>([]);
   const [requestProduct, setRequestProduct] = useState<Product | null>(null);
   const { addItem } = useCart();
+  const router = useRouter();
 
   useEffect(() => {
     let client;
@@ -113,7 +116,7 @@ export default function NewArrivals() {
 
     client
       .from("products")
-      .select("id, name, category, price_inr, image_url, is_new, stock_quantity")
+      .select("id, name, slug, category, price_inr, image_url, is_new, stock_quantity")
       .eq("is_active", true)
       .eq("is_new", true)
       .order("created_at", { ascending: false })
@@ -121,6 +124,7 @@ export default function NewArrivals() {
         if (error || !data?.length) return;
         setProducts(data.map((product) => ({
           id: product.id,
+          slug: product.slug,
           name: product.name,
           category: product.category,
           price: `₹${product.price_inr.toLocaleString("en-IN")}`,
@@ -151,7 +155,7 @@ export default function NewArrivals() {
 
         <div className="products-grid">
           {products.map((product) => (
-            <div key={product.id} className="product-card card-hover-lift">
+            <div key={product.id} className="product-card card-hover-lift" onClick={(event) => { if ((event.target as HTMLElement).closest("button")) return; router.push(`/shop/${product.slug || product.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`); }}>
               {/* Product Image & Tags */}
               <div className="product-image-container zoom-container">
                 {product.isNew && (
