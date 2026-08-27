@@ -2,6 +2,24 @@
 
 import React, { useState } from "react";
 import { Send, CheckCircle2 } from "lucide-react";
+import { createSupabaseBrowserClient } from "@/lib/supabase";
+
+const INQUIRY_EMAIL = "requests@theyarnside.in";
+
+const categories = [
+  { value: "flowers-bouquets", label: "Flowers & Bouquets" },
+  { value: "toys-plushies", label: "Toys & Plushies" },
+  { value: "keychains-charms", label: "Keychains & Charms" },
+  { value: "bags-pouches", label: "Bags & Pouches" },
+  { value: "hair-fashion-accessories", label: "Hair & Fashion Accessories" },
+  { value: "wearables", label: "Wearables" },
+  { value: "home-lifestyle", label: "Home & Lifestyle" },
+  { value: "blankets-throws", label: "Blankets & Throws" },
+  { value: "baby-kids", label: "Baby & Kids" },
+  { value: "gifts", label: "Gifts" },
+  { value: "custom-orders", label: "Custom Orders" },
+  { value: "others", label: "Others" },
+];
 
 export default function CustomOrders() {
   const [formData, setFormData] = useState({
@@ -12,19 +30,60 @@ export default function CustomOrders() {
   });
 
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.name && formData.email && formData.details) {
-      setIsSubmitted(true);
-      // Clear form
-      setFormData({
-        name: "",
-        email: "",
-        category: "bag",
-        details: "",
-      });
+    if (!formData.name || !formData.email || !formData.details) return;
+    setBusy(true);
+    setError("");
+
+    const categoryLabel =
+      categories.find((item) => item.value === formData.category)?.label ??
+      formData.category;
+    const subject = `Custom crochet inquiry — ${categoryLabel}`;
+    const body = [
+      `Name: ${formData.name}`,
+      `Email: ${formData.email}`,
+      `Item category: ${categoryLabel}`,
+      "",
+      "Idea:",
+      formData.details,
+    ].join("\n");
+
+    // Record it first so the enquiry reaches admin even if the customer never
+    // presses send in their mail app.
+    try {
+      const { error: insertError } = await createSupabaseBrowserClient()
+        .from("inquiries")
+        .insert({
+          customer_name: formData.name,
+          email: formData.email,
+          category: categoryLabel,
+          details: formData.details,
+        });
+      if (insertError) throw insertError;
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "We could not save your inquiry. Please try again.",
+      );
+      setBusy(false);
+      return;
     }
+
+    window.location.href = `mailto:${INQUIRY_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+    setBusy(false);
+    setIsSubmitted(true);
+    setFormData({
+      name: "",
+      email: "",
+      category: "flowers-bouquets",
+      details: "",
+    });
   };
 
   return (
@@ -52,10 +111,13 @@ export default function CustomOrders() {
             {isSubmitted ? (
               <div className="form-success-container">
                 <CheckCircle2 size={48} className="success-icon" />
-                <h3 className="success-title text-serif">Inquiry Received!</h3>
+                <h3 className="success-title text-serif">Almost there!</h3>
                 <p className="success-text text-sans">
-                  Thank you for reaching out. Anjali will review your request and get back 
-                  to you within 24 to 48 hours to discuss fiber selection and sizing.
+                  Your email app should have opened with your inquiry addressed to{" "}
+                  <a href={`mailto:${INQUIRY_EMAIL}`}>{INQUIRY_EMAIL}</a> — press send and
+                  Anjali will get back to you within 24 to 48 hours to discuss fiber
+                  selection and sizing. If nothing opened, write to us at that address
+                  directly.
                 </p>
                 <button 
                   className="btn btn-secondary btn-sm success-btn" 
@@ -100,18 +162,11 @@ export default function CustomOrders() {
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                   >
-                    <option value="flowers-bouquets">Flowers &amp; Bouquets</option>
-                    <option value="toys-plushies">Toys &amp; Plushies</option>
-                    <option value="keychains-charms">Keychains &amp; Charms</option>
-                    <option value="bags-pouches">Bags &amp; Pouches</option>
-                    <option value="hair-fashion-accessories">Hair &amp; Fashion Accessories</option>
-                    <option value="wearables">Wearables</option>
-                    <option value="home-lifestyle">Home &amp; Lifestyle</option>
-                    <option value="blankets-throws">Blankets &amp; Throws</option>
-                    <option value="baby-kids">Baby &amp; Kids</option>
-                    <option value="gifts">Gifts</option>
-                    <option value="custom-orders">Custom Orders</option>
-                    <option value="others">Others</option>
+                    {categories.map((item) => (
+                      <option key={item.value} value={item.value}>
+                        {item.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -128,9 +183,13 @@ export default function CustomOrders() {
                   ></textarea>
                 </div>
 
-                <button type="submit" className="btn btn-primary form-submit-btn">
+                {error && (
+                  <p className="form-error" role="alert">{error}</p>
+                )}
+
+                <button type="submit" className="btn btn-primary form-submit-btn" disabled={busy}>
                   <Send size={14} className="send-icon" />
-                  <span>Submit Inquiry</span>
+                  <span>{busy ? "Sending..." : "Submit Inquiry"}</span>
                 </button>
               </form>
             )}
@@ -213,6 +272,13 @@ export default function CustomOrders() {
         .textarea-input {
           resize: vertical;
           font-family: var(--font-lato), sans-serif;
+        }
+
+        .form-error {
+          margin: 0;
+          color: var(--coral);
+          font-family: var(--font-lato), sans-serif;
+          font-size: 13px;
         }
 
         .form-submit-btn {

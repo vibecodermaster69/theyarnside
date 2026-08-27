@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Heart, ShoppingBag } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
 import RequestOrderModal from "@/components/RequestOrderModal";
 import { useCart } from "@/components/CartProvider";
@@ -17,6 +17,7 @@ interface Product {
   priceInr?: number;
   image: string;
   isNew: boolean;
+  isBestSeller?: boolean;
   stockQuantity: number;
 }
 
@@ -101,7 +102,6 @@ export default function NewArrivals() {
   ];
 
   const [products, setProducts] = useState<Product[]>(fallbackProducts.filter((product) => product.isNew));
-  const [wishlist, setWishlist] = useState<number[]>([]);
   const [requestProduct, setRequestProduct] = useState<Product | null>(null);
   const { addItem } = useCart();
   const router = useRouter();
@@ -116,7 +116,7 @@ export default function NewArrivals() {
 
     client
       .from("products")
-      .select("id, name, slug, category, price_inr, image_url, is_new, stock_quantity")
+      .select("id, name, slug, category, price_inr, image_url, is_new, is_best_seller, stock_quantity")
       .eq("is_active", true)
       .eq("is_new", true)
       .order("created_at", { ascending: false })
@@ -130,18 +130,11 @@ export default function NewArrivals() {
           price: `₹${product.price_inr.toLocaleString("en-IN")}`,
           image: product.image_url || "/assets/02_website_assets/product_images/daisy_market_tote.png",
           isNew: product.is_new,
+          isBestSeller: product.is_best_seller,
           stockQuantity: product.stock_quantity,
         })));
       });
   }, []);
-
-  const toggleWishlist = (id: number) => {
-    if (wishlist.includes(id)) {
-      setWishlist(wishlist.filter((productId) => productId !== id));
-    } else {
-      setWishlist([...wishlist, id]);
-    }
-  };
 
   return (
     <section id="shop" className="section-padding products-section">
@@ -161,21 +154,13 @@ export default function NewArrivals() {
                 {product.isNew && (
                   <span className="product-tag badge badge-new">New</span>
                 )}
-                
-                <button
-                  className={`wishlist-button touch-target ${
-                    wishlist.includes(product.id) ? "active" : ""
-                  }`}
-                  onClick={() => toggleWishlist(product.id)}
-                  aria-label="Add to Wishlist"
-                >
-                  <Heart
-                    size={18}
-                    fill={wishlist.includes(product.id) ? "var(--coral)" : "transparent"}
-                    color={wishlist.includes(product.id) ? "var(--coral)" : "var(--cocoa)"}
-                  />
-                </button>
 
+                {product.isBestSeller && (
+                  <span className={`bestseller-badge ${product.isNew ? "below-new" : ""}`}>
+                    Bestseller
+                  </span>
+                )}
+                
                 <Image
                   src={product.image}
                   alt={product.name}
@@ -267,25 +252,27 @@ export default function NewArrivals() {
           z-index: 10;
         }
 
-        .wishlist-button {
+        .bestseller-badge {
           position: absolute;
-          top: 12px;
-          right: 12px;
+          top: 16px;
+          left: 0;
           z-index: 10;
-          background-color: var(--white);
-          border-radius: var(--border-radius-round);
-          box-shadow: 0 2px 6px rgba(75, 58, 50, 0.1);
-          color: var(--cocoa);
-          transition: var(--transition-fast);
+          min-width: 100px;
+          padding: 5px 16px 5px 10px;
+          background: var(--coral);
+          color: var(--white);
+          font-family: var(--font-lato), sans-serif;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          line-height: 1.25;
+          text-transform: uppercase;
+          box-shadow: 0 4px 10px rgba(75, 58, 50, 0.12);
+          clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%);
         }
 
-        .wishlist-button:hover {
-          transform: scale(1.08);
-          color: var(--coral);
-        }
-
-        .wishlist-button.active {
-          color: var(--coral);
+        .bestseller-badge.below-new {
+          top: 48px;
         }
 
         .product-info {

@@ -90,7 +90,7 @@ export default function Footer() {
 
           <div className="footer-socials">
             <a
-              href="https://www.instagram.com/theyarnside.co/"
+              href="https://www.instagram.com/theyarnside.in/"
               target="_blank"
               rel="noopener noreferrer"
               className="footer-social-link touch-target"
@@ -99,7 +99,7 @@ export default function Footer() {
               <InstagramIcon size={23} />
             </a>
             <a
-              href="mailto:cozy@theyarnside.com"
+              href="mailto:support@theyarnside.in"
               className="footer-social-link touch-target"
               aria-label="Email"
             >

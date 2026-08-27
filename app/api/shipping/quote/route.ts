@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { qualifiesForFreeShipping } from "@/lib/shipping";
 
 const shiprocketBaseUrl = "https://apiv2.shiprocket.in/v1/external";
 
@@ -47,8 +48,11 @@ export async function POST(request: NextRequest) {
 
     const cheapest = couriers.reduce((current: { rate: number }, courier: { rate?: number }) => Number(courier.rate || Infinity) < Number(current.rate || Infinity) ? courier : current, couriers[0]);
     const shiprocketRate = Number(cheapest.rate);
-    const shippingInr = shiprocketRate <= 100 ? 99 : shiprocketRate + 20;
-    return NextResponse.json({ shippingInr, courier: cheapest.courier_name, estimatedDays: cheapest.estimated_delivery_days, weightKg: weight });
+    const baseShippingInr = shiprocketRate <= 100 ? 99 : shiprocketRate + 20;
+    // Serviceability still has to pass above; we only waive what we charge.
+    const freeShipping = qualifiesForFreeShipping(cartValue);
+    const shippingInr = freeShipping ? 0 : baseShippingInr;
+    return NextResponse.json({ shippingInr, baseShippingInr, freeShipping, courier: cheapest.courier_name, estimatedDays: cheapest.estimated_delivery_days, weightKg: weight });
   } catch {
     return NextResponse.json({ error: "Unable to calculate shipping right now." }, { status: 502 });
   }

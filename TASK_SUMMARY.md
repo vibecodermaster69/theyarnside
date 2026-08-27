@@ -7,8 +7,8 @@
 - Hosting: Vercel
 - Database and authentication: Supabase Free Plan
 - Source repository: https://github.com/vibecodermaster69/theyarnside
-- Live website: https://theyarnside.vercel.app
-- Admin page: https://theyarnside.vercel.app/admin
+- Live website: https://theyarnside.in
+- Admin page: https://theyarnside.in/admin
 
 ## Completed Tasks
 
@@ -29,7 +29,7 @@ Completed changes:
 
 The supplied Instagram profile was:
 
-https://www.instagram.com/theyarnside.co/
+https://www.instagram.com/theyarnside.in/
 
 Updated destinations in:
 
@@ -114,7 +114,7 @@ Order support includes customer information, delivery address, notes, order stat
 
 Added a protected admin route:
 
-https://theyarnside.vercel.app/admin
+https://theyarnside.in/admin
 
 The admin page includes:
 
@@ -180,7 +180,7 @@ vercel --prod --yes
 
 The final production alias is:
 
-https://theyarnside.vercel.app
+https://theyarnside.in
 
 The deployed website and `/admin` route were checked and returned HTTP status `200`.
 
@@ -265,7 +265,7 @@ values ('YOUR_SUPABASE_USER_ID');
 
 After this, sign in at:
 
-https://theyarnside.vercel.app/admin
+https://theyarnside.in/admin
 
 ## Current Limitations
 

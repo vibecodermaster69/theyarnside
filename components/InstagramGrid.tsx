@@ -27,32 +27,32 @@ export default function InstagramGrid() {
   const fallbackPosts = [
     {
       image: "/assets/03_instagram_kit/ig_feed_post.png",
-      link: "https://www.instagram.com/theyarnside.co/",
+      link: "https://www.instagram.com/theyarnside.in/",
       alt: "Handmade crochet bag detail",
     },
     {
       image: "/assets/03_instagram_kit/ig_carousel_cover.png",
-      link: "https://www.instagram.com/theyarnside.co/",
+      link: "https://www.instagram.com/theyarnside.in/",
       alt: "Crochet stitches and guides",
     },
     {
       image: "/assets/03_instagram_kit/ig_reel_cover.png",
-      link: "https://www.instagram.com/theyarnside.co/",
+      link: "https://www.instagram.com/theyarnside.in/",
       alt: "Crochet amigurumi bunny process",
     },
     {
       image: "/assets/03_instagram_kit/highlight_covers/behind_the_scenes.png",
-      link: "https://www.instagram.com/theyarnside.co/",
+      link: "https://www.instagram.com/theyarnside.in/",
       alt: "Studio workspace with yarn",
     },
     {
       image: "/assets/03_instagram_kit/highlight_covers/custom_orders.png",
-      link: "https://www.instagram.com/theyarnside.co/",
+      link: "https://www.instagram.com/theyarnside.in/",
       alt: "Custom ordered crochet blanket",
     },
     {
       image: "/assets/03_instagram_kit/highlight_covers/yarn_love.png",
-      link: "https://www.instagram.com/theyarnside.co/",
+      link: "https://www.instagram.com/theyarnside.in/",
       alt: "Colorful natural cotton yarn balls",
     },
   ];
@@ -98,7 +98,7 @@ export default function InstagramGrid() {
         <h2 className="section-title text-serif">Behind the Loops</h2>
         <div className="section-subtitle tagline">
           <span className="flourish-heart">♥</span>
-          Follow our daily loops on Instagram <a href="https://www.instagram.com/theyarnside.co/" target="_blank" rel="noopener noreferrer" className="ig-handle">@theyarnside.co</a>
+          Follow our daily loops on Instagram <a href="https://www.instagram.com/theyarnside.in/" target="_blank" rel="noopener noreferrer" className="ig-handle">@theyarnside.in</a>
           <span className="flourish-heart">♥</span>
         </div>
 

@@ -1,14 +1,42 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Search, User, ShoppingBag, Menu, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Search, ShoppingBag, Menu, X } from "lucide-react";
 import { useCart } from "@/components/CartProvider";
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const searchInput = useRef<HTMLInputElement>(null);
+  const router = useRouter();
   const { itemCount, openCart } = useCart();
+
+  const runSearch = (event: React.FormEvent) => {
+    event.preventDefault();
+    const term = query.trim();
+    if (!term) {
+      searchInput.current?.focus();
+      return;
+    }
+    router.push(`/shop?q=${encodeURIComponent(term)}`);
+    setSearchOpen(false);
+    setMobileMenuOpen(false);
+  };
+
+  const openSearch = () => {
+    setSearchOpen(true);
+    window.setTimeout(() => searchInput.current?.focus(), 60);
+  };
+
+  const closeSearch = () => {
+    setSearchOpen(false);
+    setQuery("");
+  };
+
   const shopCategories = [
     { label: "Amigurumi", value: "amigurumi" },
     { label: "Wearables", value: "wearables" },
@@ -43,7 +71,7 @@ export default function Header() {
         {/* Left Side: Social Media Icons (Desktop only) */}
         <div className="header-socials">
           <a
-            href="https://www.instagram.com/theyarnside.co/"
+            href="https://www.instagram.com/theyarnside.in/"
             target="_blank"
             rel="noopener noreferrer"
             className="social-icon-link touch-target"
@@ -86,12 +114,37 @@ export default function Header() {
 
         {/* Right Side: Utilities (Search, Profile, Cart) */}
         <div className="header-utils">
-          <button className="util-button touch-target hide-mobile" aria-label="Search">
-            <Search size={20} />
-          </button>
-          <button className="util-button touch-target hide-mobile" aria-label="Profile">
-            <User size={20} />
-          </button>
+          <form
+            className={`header-search hide-mobile ${searchOpen ? "open" : ""}`}
+            role="search"
+            onSubmit={runSearch}
+          >
+            <button
+              type={searchOpen ? "submit" : "button"}
+              className="util-button touch-target"
+              aria-label={searchOpen ? "Search pieces" : "Open search"}
+              aria-expanded={searchOpen}
+              onClick={searchOpen ? undefined : openSearch}
+            >
+              <Search size={20} />
+            </button>
+            <input
+              ref={searchInput}
+              type="search"
+              value={query}
+              placeholder="Search pieces..."
+              aria-label="Search pieces"
+              aria-hidden={!searchOpen}
+              tabIndex={searchOpen ? 0 : -1}
+              onChange={(event) => setQuery(event.target.value)}
+              onKeyDown={(event) => { if (event.key === "Escape") closeSearch(); }}
+            />
+            {searchOpen && (
+              <button type="button" className="search-clear touch-target" aria-label="Close search" onClick={closeSearch}>
+                <X size={16} />
+              </button>
+            )}
+          </form>
           <button className="util-button touch-target cart-btn" aria-label={`Shopping Cart${itemCount ? `, ${itemCount} items` : ""}`} onClick={openCart}>
             <ShoppingBag size={20} />
             {itemCount > 0 && <span className="cart-badge">{itemCount > 9 ? "9+" : itemCount}</span>}
@@ -121,6 +174,19 @@ export default function Header() {
             </button>
           </div>
           
+          <form className="drawer-search" role="search" onSubmit={runSearch}>
+            <input
+              type="search"
+              value={query}
+              placeholder="Search pieces..."
+              aria-label="Search pieces"
+              onChange={(event) => setQuery(event.target.value)}
+            />
+            <button type="submit" className="touch-target" aria-label="Search pieces">
+              <Search size={18} />
+            </button>
+          </form>
+
           <nav className="drawer-nav">
             <Link href="/" className="drawer-link" onClick={() => setMobileMenuOpen(false)}>Home</Link>
             <Link href="/shop" className="drawer-link" onClick={() => setMobileMenuOpen(false)}>Shop</Link>
@@ -142,7 +208,7 @@ export default function Header() {
 
           <div className="drawer-footer">
             <div className="drawer-socials">
-              <a href="https://www.instagram.com/theyarnside.co/" target="_blank" rel="noopener noreferrer" className="social-icon-link touch-target">
+              <a href="https://www.instagram.com/theyarnside.in/" target="_blank" rel="noopener noreferrer" className="social-icon-link touch-target">
                 <InstagramIcon size={20} />
               </a>
             </div>
@@ -271,6 +337,107 @@ export default function Header() {
         }
 
         .util-button:hover {
+          color: var(--coral);
+        }
+
+        .header-search {
+          display: flex;
+          align-items: center;
+          gap: 2px;
+          border-bottom: 1px solid transparent;
+          transition: border-color var(--transition-fast);
+        }
+
+        .header-search input {
+          width: 0;
+          padding: 0;
+          opacity: 0;
+          pointer-events: none;
+          appearance: none;
+          outline: none;
+          font-size: 14px;
+          color: var(--cocoa);
+          transition:
+            width var(--transition-normal),
+            padding var(--transition-normal),
+            opacity var(--transition-fast);
+        }
+
+        .header-search input::-webkit-search-cancel-button {
+          display: none;
+        }
+
+        .header-search input::placeholder {
+          color: rgba(75, 58, 50, 0.45);
+        }
+
+        .header-search.open {
+          border-bottom-color: rgba(75, 58, 50, 0.25);
+        }
+
+        .header-search.open:focus-within {
+          border-bottom-color: var(--coral);
+        }
+
+        .header-search.open input {
+          width: clamp(120px, 14vw, 190px);
+          padding: 6px 2px;
+          opacity: 1;
+          pointer-events: auto;
+        }
+
+        .search-clear {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          color: rgba(75, 58, 50, 0.5);
+          transition: var(--transition-fast);
+        }
+
+        .search-clear:hover {
+          color: var(--coral);
+        }
+
+        .drawer-search {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 20px;
+          padding: 10px 14px;
+          border: 1px solid rgba(75, 58, 50, 0.16);
+          border-radius: var(--border-radius-lg);
+          background: var(--white);
+        }
+
+        .drawer-search:focus-within {
+          border-color: var(--coral);
+        }
+
+        .drawer-search input {
+          flex: 1;
+          min-width: 0;
+          appearance: none;
+          outline: none;
+          font-size: 14px;
+          color: var(--cocoa);
+        }
+
+        .drawer-search input::-webkit-search-cancel-button {
+          display: none;
+        }
+
+        .drawer-search input::placeholder {
+          color: rgba(75, 58, 50, 0.45);
+        }
+
+        .drawer-search button {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--cocoa);
+        }
+
+        .drawer-search button:hover {
           color: var(--coral);
         }
 

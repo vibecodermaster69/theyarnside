@@ -1,4 +1,5 @@
 import React from "react";
+import { FREE_SHIPPING_THRESHOLD_INR } from "@/lib/shipping";
 
 export default function AnnouncementBar() {
   return (
@@ -13,7 +14,7 @@ export default function AnnouncementBar() {
       textTransform: "uppercase",
       fontFamily: "var(--font-lato), sans-serif",
     }}>
-      Free shipping on orders above ₹999/-
+      Free shipping on orders above ₹{FREE_SHIPPING_THRESHOLD_INR.toLocaleString("en-IN")}/-
     </div>
   );
 }

@@ -212,6 +212,11 @@ function ProductDetail({ slug }: { slug: string }) {
           </p>
           <p className="product-description">{product.description}</p>
           <div className="product-actions">
+            {product.stockQuantity > 0 && product.stockQuantity <= 5 && (
+              <p className="product-stock-note">
+                Only {product.stockQuantity} remaining
+              </p>
+            )}
             {product.stockQuantity > 0 ? (
               <button className="btn btn-primary" onClick={add}>
                 <ShoppingBag size={17} />{" "}
@@ -219,7 +224,11 @@ function ProductDetail({ slug }: { slug: string }) {
               </button>
             ) : (
               <p className="product-unavailable">
-                Currently made to order. Contact us to request this piece.
+                Currently made to order.{" "}
+                <a href={`mailto:orders@theyarnside.in?subject=${encodeURIComponent(`Made to order request: ${product.name}`)}`}>
+                  Contact us
+                </a>{" "}
+                to request this piece.
               </p>
             )}
           </div>
@@ -338,6 +347,15 @@ function ProductDetail({ slug }: { slug: string }) {
           display: inline-flex;
           align-items: center;
           gap: 8px;
+        }
+        .product-stock-note {
+          margin: 0 0 10px;
+          color: var(--coral);
+          font-family: var(--font-lato), sans-serif;
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
         }
         .product-unavailable {
           color: var(--coral);

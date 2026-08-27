@@ -479,8 +479,9 @@ button {
 .product-page .product-actions { margin-top: 32px !important; }
 .product-page .product-actions .btn { padding-inline: 28px !important; }
 .product-page .recommended { min-width: 0; }
-.product-page .recommended { padding-top: 36px !important; }
+.product-page .recommended { display: grid; align-content: start; gap: 12px; padding-top: 36px !important; }
 .product-page .recommended h2 { margin-bottom: 18px !important; padding-bottom: 14px !important; font-size: 22px !important; }
+.product-page .recommended h2 { margin-bottom: 6px !important; }
 .product-page .recommended-item { display: grid !important; grid-template-columns: 144px minmax(0, 1fr) !important; align-items: center !important; }
 .product-page .recommended-item img { width: 144px !important; height: 154px !important; padding: 10px !important; object-fit: contain !important; border-radius: 0 !important; }
 .product-page .recommended-item span { display: grid !important; gap: 9px !important; padding: 18px 18px 18px 22px !important; }
@@ -491,4 +492,67 @@ button {
   .product-page .recommended-item { grid-template-columns: 112px minmax(0, 1fr) !important; }
   .product-page .recommended-item img { width: 112px !important; height: 132px !important; }
   .product-page .recommended-item span { padding-inline: 14px !important; }
+}
+
+/* Price & product-name typography ------------------------------------------
+   Prices are set in Lora with lining tabular figures so amounts align in
+   columns and read as a distinct, deliberate element next to the Playfair
+   product names. */
+:root {
+  --font-price: var(--font-lora), Georgia, "Times New Roman", serif;
+}
+
+.price,
+.catalogue-footer strong,
+.product-price,
+.product-page .product-price,
+.product-page .recommended-item small,
+.cart-summary strong,
+.checkout-total strong,
+.shipping-estimate strong,
+.cart-item-info p,
+.cart-bag-copy small {
+  font-family: var(--font-price) !important;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum" 1, "tnum" 1;
+  font-weight: 500 !important;
+  letter-spacing: 0.012em;
+}
+
+.catalogue-footer strong {
+  font-size: 1.05rem !important;
+}
+
+.product-page .product-price {
+  font-size: 30px !important;
+  letter-spacing: 0.005em;
+}
+
+.product-page .recommended-item small,
+.cart-bag-copy small {
+  letter-spacing: 0.02em;
+}
+
+/* Product names: Playfair at book weight reads more editorial than bold. */
+.product-page .product-copy h1 {
+  font-weight: 400 !important;
+  letter-spacing: -0.012em;
+}
+
+/* Shop Catalogue Product Card Image Fit */
+.catalogue-image-wrap {
+  position: relative !important;
+  width: 100% !important;
+  aspect-ratio: 4 / 5 !important;
+  overflow: hidden !important;
+  background-color: var(--cream) !important;
+}
+
+.catalogue-image-wrap img,
+.catalogue-image {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  display: block !important;
 }
