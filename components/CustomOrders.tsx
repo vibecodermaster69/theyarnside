@@ -32,6 +32,7 @@ export default function CustomOrders() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [emailSent, setEmailSent] = useState(true);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,28 +43,22 @@ export default function CustomOrders() {
     const categoryLabel =
       categories.find((item) => item.value === formData.category)?.label ??
       formData.category;
-    const subject = `Custom crochet inquiry — ${categoryLabel}`;
-    const body = [
-      `Name: ${formData.name}`,
-      `Email: ${formData.email}`,
-      `Item category: ${categoryLabel}`,
-      "",
-      "Idea:",
-      formData.details,
-    ].join("\n");
 
-    // Record it first so the enquiry reaches admin even if the customer never
-    // presses send in their mail app.
+    // Record it first: a mail outage should never cost us the enquiry itself.
+    let inquiryId: number;
     try {
-      const { error: insertError } = await createSupabaseBrowserClient()
+      const { data, error: insertError } = await createSupabaseBrowserClient()
         .from("inquiries")
         .insert({
           customer_name: formData.name,
           email: formData.email,
           category: categoryLabel,
           details: formData.details,
-        });
+        })
+        .select("id")
+        .single();
       if (insertError) throw insertError;
+      inquiryId = data.id;
     } catch (submitError) {
       setError(
         submitError instanceof Error
@@ -74,7 +69,24 @@ export default function CustomOrders() {
       return;
     }
 
-    window.location.href = `mailto:${INQUIRY_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    // The enquiry is safe either way, so a failed email downgrades the
+    // confirmation wording rather than blocking the customer.
+    try {
+      const response = await fetch("/api/inquiry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          inquiryId,
+          customerName: formData.name,
+          customerEmail: formData.email,
+          category: categoryLabel,
+          details: formData.details,
+        }),
+      });
+      setEmailSent(response.ok);
+    } catch {
+      setEmailSent(false);
+    }
 
     setBusy(false);
     setIsSubmitted(true);
@@ -111,13 +123,22 @@ export default function CustomOrders() {
             {isSubmitted ? (
               <div className="form-success-container">
                 <CheckCircle2 size={48} className="success-icon" />
-                <h3 className="success-title text-serif">Almost there!</h3>
+                <h3 className="success-title text-serif">Inquiry received!</h3>
                 <p className="success-text text-sans">
-                  Your email app should have opened with your inquiry addressed to{" "}
-                  <a href={`mailto:${INQUIRY_EMAIL}`}>{INQUIRY_EMAIL}</a> — press send and
-                  Anjali will get back to you within 24 to 48 hours to discuss fiber
-                  selection and sizing. If nothing opened, write to us at that address
-                  directly.
+                  {emailSent ? (
+                    <>
+                      A copy is on its way to your inbox. Anjali will reply within 24 to 48
+                      hours to discuss fiber selection and sizing — just reply to that email
+                      to add anything else.
+                    </>
+                  ) : (
+                    <>
+                      We have your inquiry safely. The confirmation email did not go through,
+                      so if you need to add anything, write to us at{" "}
+                      <a href={`mailto:${INQUIRY_EMAIL}`}>{INQUIRY_EMAIL}</a>. Anjali will
+                      reply within 24 to 48 hours.
+                    </>
+                  )}
                 </p>
                 <button 
                   className="btn btn-secondary btn-sm success-btn" 
