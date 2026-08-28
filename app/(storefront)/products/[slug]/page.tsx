@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getProducts } from "@/lib/catalogue";
+import { stripMarks } from "@/lib/marks";
 import ProductPageClient from "@/components/ProductPageClient";
 
 export const revalidate = 60;
@@ -18,10 +19,12 @@ async function findProduct(slug: string) {
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const product = await findProduct(params.slug);
   if (!product) return { title: "Piece not found | THE YARN SIDE" };
+  const name = stripMarks(product.name);
+  const description = stripMarks(product.description);
   return {
-    title: `${product.name} | THE YARN SIDE`,
-    description: product.description,
-    openGraph: { title: product.name, description: product.description, images: [{ url: product.image }] },
+    title: `${name} | THE YARN SIDE`,
+    description,
+    openGraph: { title: name, description, images: [{ url: product.image }] },
   };
 }
 

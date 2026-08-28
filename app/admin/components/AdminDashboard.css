@@ -258,6 +258,27 @@
   .split-view-container { grid-template-columns: 1fr !important; }
 }
 
+@media (max-width: 700px) {
+  .admin-page { min-height: 100dvh; }
+  .content-header { flex-wrap: wrap; margin-bottom: 20px; }
+  .content-header > .btn, .content-header > button { width: 100%; justify-content: center; }
+  .content-title p { line-height: 1.5; }
+  .form-card { padding: 18px !important; border-radius: 10px; }
+  .form-row { grid-template-columns: 1fr !important; gap: 14px; }
+  .colour-variant-row { grid-template-columns: minmax(0, 1fr) 48px minmax(0, .8fr) 40px !important; gap: 10px !important; }
+  .colour-variant-row label:nth-child(4) { grid-column: 1 / -1; }
+  .colour-variant-row label:nth-child(4) select { width: 100%; }
+  .colour-variant-row > .btn-icon { grid-column: 4; grid-row: 1; align-self: end; justify-self: end; }
+  input, select, textarea { min-height: 42px; font-size: 16px; }
+  .btn, .btn-icon, .sidebar-link, .sidebar-logout { min-height: 42px; }
+  .search-filter-row { flex-direction: column; align-items: stretch; gap: 10px; }
+  .search-input-wrap { width: 100%; }
+  .data-table { min-width: 620px; }
+  .products-table .data-table { min-width: 0; }
+  .products-table .product-cell { align-items: flex-start; }
+  .product-form-actions { position: sticky; bottom: 0; z-index: 5; background: var(--color-bg); padding: 10px 0; }
+}
+
 .content-header {
   display: flex;
   justify-content: space-between;
@@ -836,4 +857,36 @@
   .mobile-sidebar-backdrop { display: block; position: fixed; inset: 0; z-index: 1100; width: 100%; height: 100%; border: 0; background: rgba(58,47,40,.38); cursor: pointer; }
   .mobile-sidebar-toggle { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; margin-right: 8px; color: var(--color-text-dark); background: var(--color-white); border: 1px solid var(--color-border); border-radius: 8px; cursor: pointer; }
   .topbar-title { gap: 4px; }
+}
+
+/* Mark picker — sits on the label row so it never displaces the field. */
+.label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.label-row label { margin-bottom: 0; }
+
+.mark-preview {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin: 10px 0 0;
+  padding: 12px 14px;
+  border: 1px dashed rgba(75, 58, 50, 0.22);
+  border-radius: 8px;
+  background: #faf6f0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #4b3a32;
+}
+.mark-preview > span:first-child {
+  flex: none;
+  font: 700 9px var(--font-lato), sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(75, 58, 50, 0.5);
 }

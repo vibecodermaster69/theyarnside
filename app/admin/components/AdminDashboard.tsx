@@ -1,7 +1,7 @@
 "use client";
 
 /* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any */
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import Link from "next/link";
 import {
   ChevronRight,
@@ -39,6 +39,8 @@ import "react-image-crop/dist/ReactCrop.css";
 import "./AdminDashboard.css";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
 import { REQUEST_STATUSES, requestStatusLabel } from "@/lib/requestWorkflow";
+import MarkPicker from "@/components/MarkPicker";
+import MarkText from "@/components/MarkText";
 
 type Product = {
   id: number;
@@ -247,6 +249,9 @@ export default function AdminDashboard({
   supabase,
 }: AdminDashboardProps) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  // The mark picker inserts at the caret, so it needs the live field.
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
   const selectTab = (tab: string) => { setCurrentTab(tab); setMobileSidebarOpen(false); };
 
   // Shipping & Tracking State
@@ -953,8 +958,14 @@ export default function AdminDashboard({
                     {/* Left details panel */}
                     <div className="form-card">
                       <div className="form-group">
-                        <label>Product Title *</label>
-                        <input type="text" required value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value, slug: e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") })} placeholder="e.g. Handmade Daisy Tote" />
+                        <div className="label-row">
+                          <label>Product Title *</label>
+                          <MarkPicker targetRef={nameRef} value={draft.name} onChange={(next) => setDraft({ ...draft, name: next, slug: next.toLowerCase().replace(/:[a-z0-9-]+:/g, " ").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") })} />
+                        </div>
+                        <input ref={nameRef} type="text" required value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value, slug: e.target.value.toLowerCase().replace(/:[a-z0-9-]+:/g, " ").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") })} placeholder="e.g. Handmade Daisy Tote" />
+                        {draft.name.includes(":") && (
+                          <p className="mark-preview"><span>Storefront preview</span><MarkText size="1.15em">{draft.name}</MarkText></p>
+                        )}
                       </div>
 
                       <div className="form-row">
@@ -976,7 +987,7 @@ export default function AdminDashboard({
                           <button type="button" className="btn btn-secondary" onClick={() => setDraft({ ...draft, color_variants: [...(draft.color_variants ?? []), { name: "", hex: "#E47E6E", stockQuantity: 0, imageUrl: "" }] })}><Plus size={15} /> Add colour</button>
                         </div>
                         {(draft.color_variants ?? []).map((variant, index) => (
-                          <div key={`colour-variant-${index}`} style={{ display: "grid", gridTemplateColumns: "1fr 52px .7fr 1.4fr auto", gap: "8px", alignItems: "end", marginTop: "12px" }}>
+                          <div className="colour-variant-row" key={`colour-variant-${index}`} style={{ display: "grid", gridTemplateColumns: "1fr 52px .7fr 1.4fr auto", gap: "8px", alignItems: "end", marginTop: "12px" }}>
                             <label>Colour name<input required type="text" value={variant.name} placeholder="Red" onChange={(e) => { const next = [...draft.color_variants]; next[index] = { ...variant, name: e.target.value }; setDraft({ ...draft, color_variants: next }); }} /></label>
                             <label>Pick<input type="color" value={variant.hex || "#E47E6E"} title="Pick colour" onChange={(e) => { const next = [...draft.color_variants]; next[index] = { ...variant, hex: e.target.value }; setDraft({ ...draft, color_variants: next }); }} /></label>
                             <label>Stock<input required type="number" min="0" value={variant.stockQuantity} onChange={(e) => { const next = [...draft.color_variants]; next[index] = { ...variant, stockQuantity: Math.max(0, Number(e.target.value)) }; setDraft({ ...draft, color_variants: next }); }} /></label>
@@ -987,8 +998,14 @@ export default function AdminDashboard({
                       </div>
 
                       <div className="form-group">
-                        <label>Full Description</label>
-                        <textarea rows={4} value={draft.description ?? ""} onChange={(e) => setDraft({ ...draft, description: e.target.value })} placeholder="Describe materials, size, yarn quality, custom color options..." />
+                        <div className="label-row">
+                          <label>Full Description</label>
+                          <MarkPicker targetRef={descriptionRef} value={draft.description ?? ""} onChange={(next) => setDraft({ ...draft, description: next })} />
+                        </div>
+                        <textarea ref={descriptionRef} rows={4} value={draft.description ?? ""} onChange={(e) => setDraft({ ...draft, description: e.target.value })} placeholder="Describe materials, size, yarn quality, custom color options..." />
+                        {(draft.description ?? "").includes(":") && (
+                          <p className="mark-preview"><span>Storefront preview</span><MarkText>{draft.description ?? ""}</MarkText></p>
+                        )}
                       </div>
 
                       <div className="form-row">

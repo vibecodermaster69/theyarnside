@@ -7,6 +7,9 @@ import { ShoppingBag } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
 import RequestOrderModal from "@/components/RequestOrderModal";
 import { useCart } from "@/components/CartProvider";
+import MarkText from "@/components/MarkText";
+import ColorVariantModal from "@/components/ColorVariantModal";
+import type { ColorVariant } from "@/lib/catalogue";
 
 function productSlug(product: { slug?: string; name: string }) {
   return (
@@ -26,6 +29,7 @@ interface Product {
   isNew: boolean;
   isBestSeller?: boolean;
   stockQuantity: number;
+  colorVariants?: ColorVariant[];
 }
 
 export default function NewArrivals() {
@@ -110,7 +114,15 @@ export default function NewArrivals() {
 
   const [products, setProducts] = useState<Product[]>(fallbackProducts.filter((product) => product.isNew));
   const [requestProduct, setRequestProduct] = useState<Product | null>(null);
+  const [variantProduct, setVariantProduct] = useState<Product | null>(null);
   const { addItem } = useCart();
+  const addProduct = (product: Product, variant?: ColorVariant) => {
+    if ((product.colorVariants?.length ?? 0) > 1 && !variant) { setVariantProduct(product); return; }
+    const selected = variant ?? product.colorVariants?.[0];
+    if (selected && selected.stockQuantity <= 0) return;
+    addItem({ id: product.id, name: product.name, priceInr: product.priceInr ?? Number(product.price.replace(/[^0-9]/g, "")), image: selected?.imageUrl || product.image, stockQuantity: product.stockQuantity, colorVariant: selected });
+    setVariantProduct(null);
+  };
 
   useEffect(() => {
     let client;
@@ -122,7 +134,7 @@ export default function NewArrivals() {
 
     client
       .from("products")
-      .select("id, name, slug, category, price_inr, image_url, is_new, is_best_seller, stock_quantity")
+      .select("id, name, slug, category, price_inr, image_url, is_new, is_best_seller, stock_quantity, color_variants")
       .eq("is_active", true)
       .eq("is_new", true)
       .order("created_at", { ascending: false })
@@ -138,6 +150,7 @@ export default function NewArrivals() {
           isNew: product.is_new,
           isBestSeller: product.is_best_seller,
           stockQuantity: product.stock_quantity,
+          colorVariants: Array.isArray(product.color_variants) ? product.color_variants : [],
         })));
       });
   }, []);
@@ -181,13 +194,14 @@ export default function NewArrivals() {
               {/* Product Info */}
               <div className="product-info">
                 <span className="product-category text-sans">{product.category}</span>
-                <h3 className="product-title text-serif">{product.name}</h3>
+                <h3 className="product-title text-serif"><MarkText size="1.05em">{product.name}</MarkText></h3>
                 
+                {product.colorVariants && product.colorVariants.length > 0 && <div className="product-colours"><span>Choose color</span><div>{product.colorVariants.map((variant) => <button type="button" key={variant.name} className={`product-colour ${variant.stockQuantity <= 0 ? "sold-out" : ""}`} style={{ backgroundColor: variant.hex }} onClick={() => addProduct(product, variant)} title={variant.name} aria-label={variant.name}>{variant.stockQuantity <= 0 ? "×" : ""}</button>)}</div></div>}
                 <div className="product-footer">
                   <span className="product-price text-serif">{product.price}</span>
                   <div className="stock-actions">
                     {product.stockQuantity === 0 ? <span className="out-of-stock">Out of stock</span> : product.stockQuantity <= 5 ? <span className="low-stock">Only {product.stockQuantity} remaining</span> : <span className="in-stock">In stock</span>}
-                    {product.stockQuantity > 0 ? <button className="add-to-cart-btn touch-target" aria-label={`Add ${product.name} to Cart`} onClick={() => addItem({ id: product.id, name: product.name, priceInr: product.priceInr ?? Number(product.price.replace(/[^0-9]/g, "")), image: product.image, stockQuantity: product.stockQuantity })}>
+                    {product.stockQuantity > 0 ? <button className="add-to-cart-btn touch-target" aria-label={`Add ${product.name} to Cart`} onClick={() => addProduct(product)}>
                       <ShoppingBag size={16} />
                       <span>Add</span>
                     </button> : <button className="request-order-btn touch-target" aria-label={`Request an order for ${product.name}`} onClick={() => setRequestProduct(product)}>
@@ -208,6 +222,7 @@ export default function NewArrivals() {
         </div>
       </div>
 
+      {variantProduct && <ColorVariantModal productName={variantProduct.name} variants={variantProduct.colorVariants ?? []} onClose={() => setVariantProduct(null)} onSelect={(variant) => addProduct(variantProduct, variant)} />}
       {requestProduct && <RequestOrderModal product={{ id: requestProduct.id, name: requestProduct.name, priceInr: requestProduct.priceInr ?? Number(requestProduct.price.replace(/[^0-9]/g, "")) }} onClose={() => setRequestProduct(null)} />}
 
       <style jsx>{`
@@ -225,7 +240,7 @@ export default function NewArrivals() {
 
         .product-card {
           position: relative;
-          background-color: var(--cream);
+          background-color: var(--white);
           border-radius: var(--border-radius-md);
           overflow: hidden;
           box-shadow: var(--shadow-sm);
@@ -308,6 +323,7 @@ export default function NewArrivals() {
           line-height: 1.3;
         }
 
+        .product-colours { margin: 0 0 12px; min-height: 58px; }.product-colours > span { display:block; margin-bottom:8px; font-size:11px; color:rgba(75,58,50,.7); line-height:1.2; }.product-colours > div { display:flex; gap:8px; flex-wrap:wrap; align-items:center; min-height:28px; }.product-colour { width:28px; height:28px; border:3px solid var(--white); outline:1px solid rgba(75,58,50,.28); border-radius:50%; cursor:pointer; color:var(--cocoa); font-size:16px; }.product-colour.sold-out { opacity:.45; cursor:not-allowed; }
         .product-footer {
           display: flex;
           justify-content: space-between;

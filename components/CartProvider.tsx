@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { ColorVariant } from "@/lib/catalogue";
+import { stripMarks } from "@/lib/marks";
 
 export type CartProduct = {
   id: number;
@@ -59,7 +60,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     isOpen,
     openCart: () => setIsOpen(true),
     closeCart: () => setIsOpen(false),
-    addItem: (product) => {
+    addItem: (raw) => {
+      // The cart feeds order records and emails, which are plain text, so a name
+      // carrying a mark token is normalised on the way in rather than at display.
+      const product = { ...raw, name: stripMarks(raw.name) };
       setItems((current) => {
         const existing = current.find((item) => getLineId(item) === getLineId(product));
         if (existing) {

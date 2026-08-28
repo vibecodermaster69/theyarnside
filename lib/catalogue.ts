@@ -74,6 +74,7 @@ function mapProduct(row: ProductRow): CatalogueProduct {
     ? row.image_urls.filter((url): url is string => typeof url === "string" && Boolean(url))
     : [];
   const image = row.image_url || imageUrls[0] || fallbackProducts[0].image;
+  const orderedImageUrls = [image, ...imageUrls.filter((url) => url !== image)];
   const colorVariants = Array.isArray(row.color_variants)
     ? row.color_variants.filter((variant): variant is Record<string, unknown> => Boolean(variant) && typeof variant === "object" && typeof (variant as Record<string, unknown>).name === "string" && typeof (variant as Record<string, unknown>).hex === "string")
       .map((variant) => ({ name: String(variant.name), hex: String(variant.hex), stockQuantity: Number(variant.stockQuantity ?? variant.stock_quantity ?? 0), imageUrl: typeof variant.imageUrl === "string" ? variant.imageUrl : undefined }))
@@ -86,7 +87,7 @@ function mapProduct(row: ProductRow): CatalogueProduct {
     category: row.category,
     priceInr: row.price_inr,
     image,
-    imageUrls: imageUrls.length ? imageUrls : [image],
+    imageUrls: orderedImageUrls.length ? orderedImageUrls : [image],
     description: row.description || fallbackDescription,
     isNew: row.is_new,
     isBestSeller: row.is_best_seller,
