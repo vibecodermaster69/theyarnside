@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -14,6 +14,14 @@ export default function Header() {
   const searchInput = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const { itemCount, openCart } = useCart();
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setMobileMenuOpen(false); };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", closeOnEscape);
+    return () => { document.body.style.overflow = previousOverflow; document.removeEventListener("keydown", closeOnEscape); };
+  }, [mobileMenuOpen]);
 
   const runSearch = (event: React.FormEvent) => {
     event.preventDefault();
@@ -84,6 +92,7 @@ export default function Header() {
         {/* Mobile Menu Toggle Button (Mobile only) */}
         <button
           className="mobile-toggle touch-target"
+          type="button"
           onClick={() => setMobileMenuOpen(true)}
           aria-label="Open Menu"
         >
@@ -167,6 +176,7 @@ export default function Header() {
             </div>
             <button
               className="drawer-close touch-target"
+              type="button"
               onClick={() => setMobileMenuOpen(false)}
               aria-label="Close Menu"
             >

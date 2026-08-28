@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Hero() {
   return (
@@ -10,8 +11,8 @@ export default function Hero() {
         {/* Left Column: Text Content */}
         <div className="hero-content">
           <h1 className="hero-title text-serif">
-            Come to the <br className="hide-mobile" />
-            cozy side.
+            Welcome to the <br className="hide-mobile" />
+            Yarn side.
           </h1>
           
           <div className="hero-tagline-container">
@@ -21,16 +22,20 @@ export default function Hero() {
             <span className="hero-line"></span>
           </div>
 
-          <p className="hero-description text-sans">
-            Thoughtfully sourced fibers, crafted one loop at a time. Discover 
-            timeless crochet pieces designed to bring warmth, texture, and a 
-            touch of elegance into your everyday life.
-          </p>
-
+          <div className="hero-description text-sans">
+            <p>
+              A little corner where yarn turns into something special. From tiny keychains and cuddly creations to forever flowers and thoughtful gifts, every piece is handmade with love, one loop at a time.
+            </p>
+            <p>
+              Whether you’re looking for a little something for yourself or a special gift for someone you love, we hope you find something that makes you smile.
+            </p>
+            <p className="hero-signoff">Made by hand. Made for you.</p>
+          </div>
+          
           <div className="hero-actions">
-            <a href="/shop" className="btn btn-primary hero-btn">
+            <Link href="/shop" className="btn btn-primary hero-btn">
               Shop Handmade
-            </a>
+            </Link>
             <a href="#categories" className="btn btn-secondary hero-btn">
               Browse Categories
             </a>
@@ -112,6 +117,20 @@ export default function Hero() {
           opacity: 0.85;
           margin-bottom: 36px;
           max-width: 480px;
+        }
+
+        .hero-description p {
+          margin: 0 0 18px;
+          line-height: 1.75;
+        }
+
+        .hero-description p:last-child {
+          margin-bottom: 0;
+        }
+
+        .hero-signoff {
+          margin-top: 22px;
+          font-style: italic;
         }
 
         .hero-actions {

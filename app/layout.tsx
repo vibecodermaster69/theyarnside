@@ -25,6 +25,7 @@ const lato = Lato({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://theyarnside.in"),
   title: "THE YARN SIDE — Polished Handmade Crochet Boutique",
   description: "Welcome to the cozy side. May the yarn be with you. Discover beautiful, high-quality handmade crochet bags, amigurumi toys, wearables, and custom orders.",
   icons: {

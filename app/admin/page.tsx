@@ -99,10 +99,13 @@ type Product = {
   dimensions: string | null;
   weight_grams: number | null;
   stock_quantity: number;
+  color_variants: ColorVariant[];
   is_new: boolean;
   is_best_seller: boolean;
   is_active: boolean;
 };
+
+type ColorVariant = { name: string; hex: string; stockQuantity: number; imageUrl?: string };
 
 type ProductDraft = Omit<Product, "id">;
 
@@ -124,6 +127,7 @@ type OrderItem = {
   product_name: string;
   quantity: number;
   unit_price_inr: number;
+  variant_name?: string | null;
 };
 
 type OrderRequest = {
@@ -174,6 +178,7 @@ const emptyProduct: ProductDraft = {
   dimensions: "",
   weight_grams: null,
   stock_quantity: 0,
+  color_variants: [],
   is_new: true,
   is_best_seller: false,
   is_active: true,
@@ -355,6 +360,37 @@ export default function AdminPage() {
     setBusy(false);
   }
 
+  async function authHeaders() {
+    const token = (await supabase?.auth.getSession())?.data.session?.access_token;
+    return token ? { Authorization: `Bearer ${token}` } : undefined;
+  }
+
+  // Supabase writes happen straight from the browser, so Next never learns the
+  // catalogue changed and keeps serving cached pages (and deleted images).
+  async function purgeStorefrontCache() {
+    const headers = await authHeaders();
+    if (!headers) return;
+    try {
+      await fetch("/api/revalidate", { method: "POST", headers });
+    } catch {
+      // A failed purge only means the storefront lags until its 60s window ends.
+    }
+  }
+
+  async function deleteStoredImage(url: string) {
+    const headers = await authHeaders();
+    if (!headers || !url.startsWith("https://storage.googleapis.com/")) return;
+    try {
+      await fetch("/api/upload", {
+        method: "DELETE",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+    } catch {
+      // Leaving an orphaned object is preferable to blocking the edit.
+    }
+  }
+
   async function saveProduct(event: FormEvent) {
     event.preventDefault();
     if (!supabase) return;
@@ -364,7 +400,10 @@ export default function AdminPage() {
       ...draft,
       image_urls: draft.image_urls ?? [],
       price_inr: Number(draft.price_inr),
-      stock_quantity: Number(draft.stock_quantity),
+      color_variants: draft.color_variants ?? [],
+      stock_quantity: draft.color_variants?.length
+        ? draft.color_variants.reduce((total, variant) => total + Math.max(0, Number(variant.stockQuantity) || 0), 0)
+        : Number(draft.stock_quantity),
       weight_grams:
         draft.weight_grams == null ? null : Number(draft.weight_grams),
     };
@@ -376,6 +415,7 @@ export default function AdminPage() {
     if (!result.error) {
       setDraft(emptyProduct);
       setEditingId(null);
+      await purgeStorefrontCache();
       await loadData();
     }
     setBusy(false);
@@ -419,7 +459,10 @@ export default function AdminPage() {
         setBusy(true);
         const { error } = await supabase.from("products").delete().eq("id", id);
         setMessage(error ? error.message : "Product deleted.");
-        if (!error) await loadData();
+        if (!error) {
+          await purgeStorefrontCache();
+          await loadData();
+        }
         setBusy(false);
       },
     });
@@ -586,6 +629,7 @@ export default function AdminPage() {
         let newDefaultUrl = current.image_url;
         
         if (imageToReplace) {
+          void deleteStoredImage(imageToReplace);
           newUrls = newUrls.map((u) => (u === imageToReplace ? newUrl : u));
           if (newDefaultUrl === imageToReplace) {
             newDefaultUrl = newUrl;
@@ -630,6 +674,7 @@ export default function AdminPage() {
   }
 
   function removeImage(urlToRemove: string) {
+    void deleteStoredImage(urlToRemove);
     setDraft((current) => {
       const newUrls = (current.image_urls ?? []).filter((url) => url !== urlToRemove);
       let newDefaultUrl = current.image_url;
@@ -734,6 +779,7 @@ export default function AdminPage() {
                 ),
                 dimensions: product.dimensions ?? "",
                 weight_grams: product.weight_grams ?? null,
+                color_variants: product.color_variants ?? [],
               });
             }}
           >

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import Image from "next/image";
 
 export default function ShopByCategory() {
@@ -39,7 +40,7 @@ export default function ShopByCategory() {
 
         <div className="category-grid">
           {categories.map((cat, index) => (
-            <a href={cat.link} key={index} className="category-card card-hover-lift">
+            <Link href={cat.link} key={index} className="category-card card-hover-lift">
               <div className="category-image-wrapper zoom-container">
                 <Image
                   src={cat.image}
@@ -52,7 +53,7 @@ export default function ShopByCategory() {
               <div className="category-info">
                 <h3 className="category-title text-serif">{cat.title}</h3>
               </div>
-            </a>
+            </Link>
           ))}
         </div>
       </div>

@@ -556,3 +556,33 @@ button {
   object-position: center !important;
   display: block !important;
 }
+
+/* ---------------------------------------------------------------------------
+   Stretched card links and the product gallery frame.
+   These target elements rendered by next/link and framer-motion components.
+   styled-jsx does not add its scoping class to a component's className, so
+   these rules must live here or they silently match nothing.
+   --------------------------------------------------------------------------- */
+.catalogue-card-link,
+.product-card-link {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+}
+
+.catalogue-card-link:focus-visible,
+.product-card-link:focus-visible {
+  outline: 2px solid var(--coral);
+  outline-offset: 3px;
+}
+
+.catalogue-card .catalogue-action,
+.product-card .add-to-cart-btn,
+.product-card .request-order-btn {
+  position: relative;
+  z-index: 4;
+}
+
+.product-hero-frame { position: relative; aspect-ratio: 4/5; overflow: hidden; }
+.product-hero-frame > div { position: absolute; inset: 0; }

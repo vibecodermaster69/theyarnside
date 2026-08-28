@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import type { ColorVariant } from "@/lib/catalogue";
 
 export type CartProduct = {
   id: number;
@@ -8,6 +9,7 @@ export type CartProduct = {
   priceInr: number;
   image: string;
   stockQuantity: number;
+  colorVariant?: ColorVariant;
 };
 
 export type CartItem = CartProduct & { quantity: number };
@@ -21,14 +23,15 @@ type CartContextValue = {
   openCart: () => void;
   closeCart: () => void;
   addItem: (product: CartProduct) => void;
-  updateQuantity: (id: number, quantity: number) => void;
-  removeItem: (id: number) => void;
+  updateQuantity: (lineId: string, quantity: number) => void;
+  removeItem: (lineId: string) => void;
   clearCart: () => void;
   clearLastAdded: () => void;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
 const storageKey = "theyarnside-cart";
+const getLineId = (product: CartProduct) => `${product.id}:${product.colorVariant?.name ?? "default"}`;
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -58,21 +61,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     closeCart: () => setIsOpen(false),
     addItem: (product) => {
       setItems((current) => {
-        const existing = current.find((item) => item.id === product.id);
+        const existing = current.find((item) => getLineId(item) === getLineId(product));
         if (existing) {
           if (existing.quantity >= product.stockQuantity) return current;
-          return current.map((item) => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
+          return current.map((item) => getLineId(item) === getLineId(product) ? { ...item, quantity: item.quantity + 1 } : item);
         }
         return [...current, { ...product, quantity: 1 }];
       });
       setLastAddedItem(product);
     },
-    updateQuantity: (id, quantity) => {
+    updateQuantity: (lineId, quantity) => {
       setItems((current) => quantity <= 0
-        ? current.filter((item) => item.id !== id)
-        : current.map((item) => item.id === id ? { ...item, quantity: Math.min(quantity, item.stockQuantity) } : item));
+        ? current.filter((item) => getLineId(item) !== lineId)
+        : current.map((item) => getLineId(item) === lineId ? { ...item, quantity: Math.min(quantity, item.colorVariant?.stockQuantity ?? item.stockQuantity) } : item));
     },
-    removeItem: (id) => setItems((current) => current.filter((item) => item.id !== id)),
+    removeItem: (lineId) => setItems((current) => current.filter((item) => getLineId(item) !== lineId)),
     clearCart: () => setItems([]),
     clearLastAdded: () => setLastAddedItem(null),
   }), [items, isOpen, lastAddedItem]);

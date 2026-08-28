@@ -51,6 +51,7 @@ type Product = {
   dimensions: string | null;
   weight_grams: number | null;
   stock_quantity: number;
+  color_variants: { name: string; hex: string; stockQuantity: number; imageUrl?: string }[];
   is_new: boolean;
   is_best_seller: boolean;
   is_active: boolean;
@@ -80,6 +81,7 @@ type OrderItem = {
   product_name: string;
   quantity: number;
   unit_price_inr: number;
+  variant_name?: string | null;
 };
 
 type OrderRequest = {
@@ -669,7 +671,7 @@ export default function AdminDashboard({
                               <div style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>{order.customer_phone}</div>
                             </td>
                             <td><span style={{ fontSize: "12px", padding: "2px 6px", borderRadius: "4px", backgroundColor: "#EAE0D5", fontWeight: 600 }}>Web</span></td>
-                            <td>{order.order_items?.map((item) => `${item.product_name} x${item.quantity}`).join(", ") || "No items listed"}</td>
+                            <td>{order.order_items?.map((item) => `${item.product_name}${item.variant_name ? ` (${item.variant_name})` : ""} x${item.quantity}`).join(", ") || "No items listed"}</td>
                             <td><strong>₹{order.total_inr.toLocaleString("en-IN")}</strong></td>
                             <td>{getStatusBadge(order.status)}</td>
                             <td>{new Date(order.created_at).toLocaleDateString("en-IN")}</td>
@@ -755,7 +757,7 @@ export default function AdminDashboard({
                         {selectedOrder.order_items?.map((item) => (
                           <div key={item.id} className="detail-row" style={{ borderBottom: "1px dashed var(--color-border)", padding: "8px 0" }}>
                             <div>
-                              <strong style={{ display: "block" }}>{item.product_name}</strong>
+                              <strong style={{ display: "block" }}>{item.product_name}{item.variant_name ? ` · ${item.variant_name}` : ""}</strong>
                               <small style={{ color: "var(--color-text-muted)" }}>Qty: {item.quantity}</small>
                             </div>
                             <strong>₹{(item.unit_price_inr * item.quantity).toLocaleString("en-IN")}</strong>
@@ -936,7 +938,7 @@ export default function AdminDashboard({
                       <h2>{editingId ? "Edit Product" : "Add New Product"}</h2>
                       <p>Upload details, configure prices, stock limits, and crop product images.</p>
                     </div>
-                    <button className="btn btn-secondary" onClick={() => { setShowProductForm(false); setEditingId(null); setDraft({ name: "", slug: "", description: "", category: "amigurumi", price_inr: 0, image_url: "", image_urls: [], dimensions: "", weight_grams: null, stock_quantity: 0, is_new: true, is_best_seller: false, is_active: true }); }}>
+                    <button className="btn btn-secondary" onClick={() => { setShowProductForm(false); setEditingId(null); setDraft({ name: "", slug: "", description: "", category: "amigurumi", price_inr: 0, image_url: "", image_urls: [], dimensions: "", weight_grams: null, stock_quantity: 0, color_variants: [], is_new: true, is_best_seller: false, is_active: true }); }}>
                       Back to Catalog
                     </button>
                   </div>
@@ -960,6 +962,22 @@ export default function AdminDashboard({
                           <label>Slug (URL Friendly) *</label>
                           <input type="text" required value={draft.slug} onChange={(e) => setDraft({ ...draft, slug: e.target.value })} />
                         </div>
+                      </div>
+
+                      <div className="form-card" style={{ marginTop: "16px", padding: "16px", background: "var(--color-brand-light)" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
+                          <div><strong>Colour options</strong><p style={{ margin: "4px 0 0", fontSize: "12px", color: "var(--color-text-muted)" }}>Each colour has separate stock and may use its own gallery image.</p></div>
+                          <button type="button" className="btn btn-secondary" onClick={() => setDraft({ ...draft, color_variants: [...(draft.color_variants ?? []), { name: "", hex: "#E47E6E", stockQuantity: 0, imageUrl: "" }] })}><Plus size={15} /> Add colour</button>
+                        </div>
+                        {(draft.color_variants ?? []).map((variant, index) => (
+                          <div key={`${index}-${variant.name}`} style={{ display: "grid", gridTemplateColumns: "1fr 52px .7fr 1.4fr auto", gap: "8px", alignItems: "end", marginTop: "12px" }}>
+                            <label>Colour name<input required type="text" value={variant.name} placeholder="Red" onChange={(e) => { const next = [...draft.color_variants]; next[index] = { ...variant, name: e.target.value }; setDraft({ ...draft, color_variants: next }); }} /></label>
+                            <label>Pick<input type="color" value={variant.hex || "#E47E6E"} title="Pick colour" onChange={(e) => { const next = [...draft.color_variants]; next[index] = { ...variant, hex: e.target.value }; setDraft({ ...draft, color_variants: next }); }} /></label>
+                            <label>Stock<input required type="number" min="0" value={variant.stockQuantity} onChange={(e) => { const next = [...draft.color_variants]; next[index] = { ...variant, stockQuantity: Math.max(0, Number(e.target.value)) }; setDraft({ ...draft, color_variants: next }); }} /></label>
+                            <label>Colour image<select value={variant.imageUrl ?? ""} onChange={(e) => { const next = [...draft.color_variants]; next[index] = { ...variant, imageUrl: e.target.value }; setDraft({ ...draft, color_variants: next }); }}><option value="">Use default image</option>{(draft.image_urls ?? []).map((url, imageIndex) => <option key={url} value={url}>Image {imageIndex + 1}</option>)}</select></label>
+                            <button type="button" className="btn-icon" aria-label="Remove colour" onClick={() => setDraft({ ...draft, color_variants: draft.color_variants.filter((_, itemIndex) => itemIndex !== index) })}><Trash2 size={16} /></button>
+                          </div>
+                        ))}
                       </div>
 
                       <div className="form-group">
@@ -1096,7 +1114,7 @@ export default function AdminDashboard({
                     </div>
                   </div>
 
-                  <div className="table-wrapper">
+                  <div className="table-wrapper products-table">
                     <table className="data-table">
                       <thead>
                         <tr>

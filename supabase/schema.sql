@@ -7,6 +7,7 @@ create table public.products (
   price_inr integer not null check (price_inr >= 0),
   image_url text,
   image_urls jsonb not null default '[]'::jsonb,
+  color_variants jsonb not null default '[]'::jsonb,
   dimensions text,
   weight_grams integer check (weight_grams is null or weight_grams >= 0),
   stock_quantity integer not null default 0 check (stock_quantity >= 0),
@@ -45,6 +46,7 @@ create table public.order_items (
   product_name text not null,
   quantity integer not null check (quantity > 0),
   unit_price_inr integer not null check (unit_price_inr >= 0),
+  variant_name text,
   created_at timestamptz not null default now()
 );
 

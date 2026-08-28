@@ -2,11 +2,18 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
 import RequestOrderModal from "@/components/RequestOrderModal";
 import { useCart } from "@/components/CartProvider";
+
+function productSlug(product: { slug?: string; name: string }) {
+  return (
+    product.slug ||
+    product.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
+  );
+}
 
 interface Product {
   id: number;
@@ -104,7 +111,6 @@ export default function NewArrivals() {
   const [products, setProducts] = useState<Product[]>(fallbackProducts.filter((product) => product.isNew));
   const [requestProduct, setRequestProduct] = useState<Product | null>(null);
   const { addItem } = useCart();
-  const router = useRouter();
 
   useEffect(() => {
     let client;
@@ -148,7 +154,8 @@ export default function NewArrivals() {
 
         <div className="products-grid">
           {products.map((product) => (
-            <div key={product.id} className="product-card card-hover-lift" onClick={(event) => { if ((event.target as HTMLElement).closest("button")) return; router.push(`/shop/${product.slug || product.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`); }}>
+            <div key={product.id} className="product-card card-hover-lift">
+              <Link href={`/products/${productSlug(product)}`} className="product-card-link" aria-label={`View ${product.name}`} />
               {/* Product Image & Tags */}
               <div className="product-image-container zoom-container">
                 {product.isNew && (
@@ -195,9 +202,9 @@ export default function NewArrivals() {
         </div>
 
         <div className="view-all-container">
-          <a href="/shop" className="btn btn-primary">
+          <Link href="/shop" className="btn btn-primary">
             View All Products
-          </a>
+          </Link>
         </div>
       </div>
 
@@ -217,6 +224,7 @@ export default function NewArrivals() {
         }
 
         .product-card {
+          position: relative;
           background-color: var(--cream);
           border-radius: var(--border-radius-md);
           overflow: hidden;
