@@ -817,3 +817,23 @@
   font-size: 13px;
   text-align: center;
 }
+
+/* Mobile admin navigation drawer */
+.mobile-sidebar-toggle, .mobile-sidebar-close, .mobile-sidebar-backdrop { display: none; }
+@media (max-width: 700px) {
+  .dashboard-container { position: relative; }
+  .sidebar { position: fixed; inset: 0 auto 0 0; z-index: 1200; width: min(286px, 86vw); padding: 20px 14px; transform: translateX(-105%); transition: transform .24s cubic-bezier(.16,1,.3,1); box-shadow: 12px 0 30px rgba(58,47,40,.12); }
+  .sidebar.mobile-open { transform: translateX(0); }
+  .sidebar-logo { justify-content: flex-start; padding: 0 8px; }
+  .sidebar-logo > div { display: block; }
+  .sidebar-link { justify-content: space-between; padding: 13px 14px; }
+  .sidebar-link-content { gap: 12px; font-size: 14px; }
+  .sidebar-badge { position: static; padding: 2px 8px; font-size: 11px; }
+  .sidebar-bottom { gap: 16px; }
+  .sidebar-love-card { display: flex; }
+  .sidebar-logout { justify-content: flex-start; font-size: 14px; padding: 12px 14px; }
+  .mobile-sidebar-close { display: inline-flex; align-items: center; justify-content: center; position: absolute; top: 18px; right: 14px; width: 38px; height: 38px; color: var(--color-text-dark); background: var(--color-white); border: 1px solid var(--color-border); border-radius: 8px; cursor: pointer; }
+  .mobile-sidebar-backdrop { display: block; position: fixed; inset: 0; z-index: 1100; width: 100%; height: 100%; border: 0; background: rgba(58,47,40,.38); cursor: pointer; }
+  .mobile-sidebar-toggle { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; margin-right: 8px; color: var(--color-text-dark); background: var(--color-white); border: 1px solid var(--color-border); border-radius: 8px; cursor: pointer; }
+  .topbar-title { gap: 4px; }
+}

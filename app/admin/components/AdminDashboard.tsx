@@ -1,7 +1,7 @@
 "use client";
 
 /* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any */
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import {
   ChevronRight,
@@ -32,6 +32,7 @@ import {
   Calendar,
   Truck,
   Star,
+  Menu,
 } from "lucide-react";
 import ReactCrop, { type Crop, type PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
@@ -245,6 +246,8 @@ export default function AdminDashboard({
   setConfirmConfig,
   supabase,
 }: AdminDashboardProps) {
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const selectTab = (tab: string) => { setCurrentTab(tab); setMobileSidebarOpen(false); };
 
   // Shipping & Tracking State
   const [tracking, setTracking] = React.useState({
@@ -403,8 +406,10 @@ export default function AdminDashboard({
   return (
     <div className="dashboard-container">
       {/* Sidebar Navigation */}
-      <aside className="sidebar">
+      {mobileSidebarOpen && <button type="button" className="mobile-sidebar-backdrop" aria-label="Close navigation" onClick={() => setMobileSidebarOpen(false)} />}
+      <aside className={`sidebar ${mobileSidebarOpen ? "mobile-open" : ""}`}>
         <div className="sidebar-top">
+          <button type="button" className="mobile-sidebar-close" aria-label="Close navigation" onClick={() => setMobileSidebarOpen(false)}><X size={22} /></button>
           <div className="sidebar-logo">
             <img src="/assets/logos/monogram_ys.png" alt="The Yarn Side" style={{ width: "40px", height: "40px" }} />
             <div>
@@ -414,13 +419,13 @@ export default function AdminDashboard({
           </div>
           
           <nav className="sidebar-nav">
-            <button className={`sidebar-link ${currentTab === "dashboard" ? "active" : ""}`} onClick={() => setCurrentTab("dashboard")}>
+            <button className={`sidebar-link ${currentTab === "dashboard" ? "active" : ""}`} onClick={() => selectTab("dashboard")}>
               <span className="sidebar-link-content">
                 <LayoutDashboard size={18} />
                 Dashboard
               </span>
             </button>
-            <button className={`sidebar-link ${currentTab === "orders" ? "active" : ""}`} onClick={() => { setCurrentTab("orders"); setSelectedOrder(null); }}>
+            <button className={`sidebar-link ${currentTab === "orders" ? "active" : ""}`} onClick={() => { selectTab("orders"); setSelectedOrder(null); }}>
               <span className="sidebar-link-content">
                 <ShoppingBag size={18} />
                 Orders
@@ -429,20 +434,20 @@ export default function AdminDashboard({
                 <span className="sidebar-badge">{orders.length + orderRequests.length + inquiries.length}</span>
               )}
             </button>
-            <button className={`sidebar-link ${currentTab === "products" ? "active" : ""}`} onClick={() => setCurrentTab("products")}>
+            <button className={`sidebar-link ${currentTab === "products" ? "active" : ""}`} onClick={() => selectTab("products")}>
               <span className="sidebar-link-content">
                 <Package size={18} />
                 Products
               </span>
             </button>
-            <button className={`sidebar-link ${currentTab === "inventory" ? "active" : ""}`} onClick={() => setCurrentTab("inventory")}>
+            <button className={`sidebar-link ${currentTab === "inventory" ? "active" : ""}`} onClick={() => selectTab("inventory")}>
               <span className="sidebar-link-content">
                 <FolderKanban size={18} />
                 Inventory
               </span>
               {lowStockCount > 0 && <span className="sidebar-badge" style={{ backgroundColor: "#F8D7DA", color: "#721C24" }}>{lowStockCount}</span>}
             </button>
-            <button className={`sidebar-link ${currentTab === "shipping" ? "active" : ""}`} onClick={() => setCurrentTab("shipping")}>
+            <button className={`sidebar-link ${currentTab === "shipping" ? "active" : ""}`} onClick={() => selectTab("shipping")}>
               <span className="sidebar-link-content">
                 <Truck size={18} />
                 Shipping
@@ -453,13 +458,13 @@ export default function AdminDashboard({
                 </span>
               )}
             </button>
-            <button className={`sidebar-link ${currentTab === "media-library" ? "active" : ""}`} onClick={() => setCurrentTab("media-library")}>
+            <button className={`sidebar-link ${currentTab === "media-library" ? "active" : ""}`} onClick={() => selectTab("media-library")}>
               <span className="sidebar-link-content">
                 <ImageIcon size={18} />
                 Media Library
               </span>
             </button>
-            <button className={`sidebar-link ${currentTab === "settings" ? "active" : ""}`} onClick={() => setCurrentTab("settings")}>
+            <button className={`sidebar-link ${currentTab === "settings" ? "active" : ""}`} onClick={() => selectTab("settings")}>
               <span className="sidebar-link-content">
                 <SettingsIcon size={18} />
                 Settings
@@ -488,6 +493,7 @@ export default function AdminDashboard({
         {/* Topbar */}
         <header className="topbar">
           <div className="topbar-title">
+            <button type="button" className="mobile-sidebar-toggle" aria-label="Open navigation" onClick={() => setMobileSidebarOpen(true)}><Menu size={21} /></button>
             <span style={{ textTransform: "capitalize", fontWeight: 700, fontSize: "18px" }}>{currentTab}</span>
           </div>
 
@@ -970,7 +976,7 @@ export default function AdminDashboard({
                           <button type="button" className="btn btn-secondary" onClick={() => setDraft({ ...draft, color_variants: [...(draft.color_variants ?? []), { name: "", hex: "#E47E6E", stockQuantity: 0, imageUrl: "" }] })}><Plus size={15} /> Add colour</button>
                         </div>
                         {(draft.color_variants ?? []).map((variant, index) => (
-                          <div key={`${index}-${variant.name}`} style={{ display: "grid", gridTemplateColumns: "1fr 52px .7fr 1.4fr auto", gap: "8px", alignItems: "end", marginTop: "12px" }}>
+                          <div key={`colour-variant-${index}`} style={{ display: "grid", gridTemplateColumns: "1fr 52px .7fr 1.4fr auto", gap: "8px", alignItems: "end", marginTop: "12px" }}>
                             <label>Colour name<input required type="text" value={variant.name} placeholder="Red" onChange={(e) => { const next = [...draft.color_variants]; next[index] = { ...variant, name: e.target.value }; setDraft({ ...draft, color_variants: next }); }} /></label>
                             <label>Pick<input type="color" value={variant.hex || "#E47E6E"} title="Pick colour" onChange={(e) => { const next = [...draft.color_variants]; next[index] = { ...variant, hex: e.target.value }; setDraft({ ...draft, color_variants: next }); }} /></label>
                             <label>Stock<input required type="number" min="0" value={variant.stockQuantity} onChange={(e) => { const next = [...draft.color_variants]; next[index] = { ...variant, stockQuantity: Math.max(0, Number(e.target.value)) }; setDraft({ ...draft, color_variants: next }); }} /></label>
