@@ -66,10 +66,15 @@ export default function ShopCatalogueClient({
   };
 
   const addProduct = (product: CatalogueProduct, variant?: CatalogueProduct["colorVariants"][number]) => {
+    if (variant) { setVariantProduct(product); return; }
     if (product.colorVariants.length > 1 && !variant) { setVariantProduct(product); return; }
     const selected = variant ?? product.colorVariants[0];
     if (selected && selected.stockQuantity <= 0) return;
     addItem({ id: product.id, name: product.name, priceInr: product.priceInr, image: selected?.imageUrl || product.image, stockQuantity: product.stockQuantity, colorVariant: selected });
+    setVariantProduct(null);
+  };
+  const addSelections = (product: CatalogueProduct, selections: { variant: CatalogueProduct["colorVariants"][number]; quantity: number }[]) => {
+    selections.forEach(({ variant, quantity }) => addItem({ id: product.id, name: product.name, priceInr: product.priceInr, image: variant.imageUrl || product.image, stockQuantity: product.stockQuantity, colorVariant: variant }, quantity));
     setVariantProduct(null);
   };
 
@@ -88,7 +93,7 @@ export default function ShopCatalogueClient({
         </div>
       </section>
       {requestProduct && <RequestOrderModal product={{ id: requestProduct.id, name: requestProduct.name, priceInr: requestProduct.priceInr }} onClose={() => setRequestProduct(null)} />}
-      {variantProduct && <ColorVariantModal productName={variantProduct.name} variants={variantProduct.colorVariants} onClose={() => setVariantProduct(null)} onSelect={(variant) => addProduct(variantProduct, variant)} />}
+      {variantProduct && <ColorVariantModal productName={variantProduct.name} variants={variantProduct.colorVariants} onClose={() => setVariantProduct(null)} onSelect={(selections) => addSelections(variantProduct, selections)} />}
       <style jsx>{`
         .shop-page { min-height: 100vh; background: var(--cream); color: var(--cocoa); }
         .catalogue-section { background: var(--cream); }

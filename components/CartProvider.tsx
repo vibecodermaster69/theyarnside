@@ -23,7 +23,7 @@ type CartContextValue = {
   isOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
-  addItem: (product: CartProduct) => void;
+  addItem: (product: CartProduct, quantity?: number) => void;
   updateQuantity: (lineId: string, quantity: number) => void;
   removeItem: (lineId: string) => void;
   clearCart: () => void;
@@ -60,17 +60,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     isOpen,
     openCart: () => setIsOpen(true),
     closeCart: () => setIsOpen(false),
-    addItem: (raw) => {
+    addItem: (raw, quantity = 1) => {
       // The cart feeds order records and emails, which are plain text, so a name
       // carrying a mark token is normalised on the way in rather than at display.
       const product = { ...raw, name: stripMarks(raw.name) };
       setItems((current) => {
         const existing = current.find((item) => getLineId(item) === getLineId(product));
         if (existing) {
-          if (existing.quantity >= product.stockQuantity) return current;
-          return current.map((item) => getLineId(item) === getLineId(product) ? { ...item, quantity: item.quantity + 1 } : item);
+          const limit = product.colorVariant?.stockQuantity ?? product.stockQuantity;
+          return current.map((item) => getLineId(item) === getLineId(product) ? { ...item, quantity: Math.min(item.quantity + quantity, limit) } : item);
         }
-        return [...current, { ...product, quantity: 1 }];
+        return [...current, { ...product, quantity: Math.min(quantity, product.colorVariant?.stockQuantity ?? product.stockQuantity) }];
       });
       setLastAddedItem(product);
     },

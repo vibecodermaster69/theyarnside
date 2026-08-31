@@ -117,10 +117,15 @@ export default function NewArrivals() {
   const [variantProduct, setVariantProduct] = useState<Product | null>(null);
   const { addItem } = useCart();
   const addProduct = (product: Product, variant?: ColorVariant) => {
+    if (variant) { setVariantProduct(product); return; }
     if ((product.colorVariants?.length ?? 0) > 1 && !variant) { setVariantProduct(product); return; }
     const selected = variant ?? product.colorVariants?.[0];
     if (selected && selected.stockQuantity <= 0) return;
     addItem({ id: product.id, name: product.name, priceInr: product.priceInr ?? Number(product.price.replace(/[^0-9]/g, "")), image: selected?.imageUrl || product.image, stockQuantity: product.stockQuantity, colorVariant: selected });
+    setVariantProduct(null);
+  };
+  const addSelections = (product: Product, selections: { variant: ColorVariant; quantity: number }[]) => {
+    selections.forEach(({ variant, quantity }) => addItem({ id: product.id, name: product.name, priceInr: product.priceInr ?? Number(product.price.replace(/[^0-9]/g, "")), image: variant.imageUrl || product.image, stockQuantity: product.stockQuantity, colorVariant: variant }, quantity));
     setVariantProduct(null);
   };
 
@@ -222,7 +227,7 @@ export default function NewArrivals() {
         </div>
       </div>
 
-      {variantProduct && <ColorVariantModal productName={variantProduct.name} variants={variantProduct.colorVariants ?? []} onClose={() => setVariantProduct(null)} onSelect={(variant) => addProduct(variantProduct, variant)} />}
+      {variantProduct && <ColorVariantModal productName={variantProduct.name} variants={variantProduct.colorVariants ?? []} onClose={() => setVariantProduct(null)} onSelect={(selections) => addSelections(variantProduct, selections)} />}
       {requestProduct && <RequestOrderModal product={{ id: requestProduct.id, name: requestProduct.name, priceInr: requestProduct.priceInr ?? Number(requestProduct.price.replace(/[^0-9]/g, "")) }} onClose={() => setRequestProduct(null)} />}
 
       <style jsx>{`
